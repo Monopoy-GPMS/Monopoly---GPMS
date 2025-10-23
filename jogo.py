@@ -102,14 +102,21 @@ class Jogo:
                 print(f"  > Pagando aluguel de R${aluguel} para {propriedade.proprietario.nome}...")
                 
                 # O banco gerencia a transação (pagador, valor, recebedor)
-                self.banco.pagar(jogador.nome, aluguel, propriedade.proprietario.nome)
+                if not self.banco.pagar(jogador.nome, aluguel, propriedade.proprietario.nome):
+                    self.jogadores.pop(self.indice_turno_atual)
+                    print(f"O jogador{self.jogadores[self.indice_turno_atual]} faliu")
+                    self.indice_turno_atual -=1
+                else:
+                    self.banco.pagar(jogador.nome, aluguel, propriedade.proprietario.nome)
 
-        # 4. Mudar o Turno (Lógica simples: passa para o próximo, ignorando duplos por enquanto)
-        self.indice_turno_atual = (self.indice_turno_atual + 1) % len(self.jogadores)
-        
-        # Exibe o status final do turno para o monitoramento
-        self.status_geral()
-        input("\n[Pressione Enter para ir para o próximo turno...]")
+        if not eh_duplo:
+            print("Vez do próximo jogaador")
+            self.indice_turno_atual = (self.indice_turno_atual + 1) % len(self.jogadores)
+            input("\n[Pressione Enter para ir para o próximo turno...]")
+        else:
+            print("Jogue novamente")
+            self.status_geral()
+            input("\n[Pressione Enter para ir para o próximo turno...]")
 
 
     def status_geral(self):
