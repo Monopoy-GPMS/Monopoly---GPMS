@@ -13,6 +13,7 @@ class Jogador:
         self.em_prisao = False    # Flag que indica se o jogador está na prisão
         self.is_ia = is_ia        # Flag para Escalabilidade (Requisito 08): Define se é um bot
         self.cartas_livre_prisao = 0 # Contagem de cartas "Saia Livre da Prisão"
+        self.ultima_rolagem = 0 # Armazena o valor total dos dados para Aluguel de Companhias
 
     def mover(self, dados_rolados):
         """

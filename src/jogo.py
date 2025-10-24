@@ -1,22 +1,16 @@
-# regras.py
+# src/jogo.py
 # Módulo principal que gerencia o fluxo de turnos, rolagem de dados e a aplicação das regras do jogo.
 
-""" 
-Esse regras.py está funcionando como um main.py provisório...
-
-Para a versão parcial, podemos executá-lo e usar o console ou prints do mesmo para a evidenciar o progresso da Versão Parcial do Produto...
-Esse é um backend inicial...
-
-"""
-
 import random
-# Importação dos módulos que definem a Estrutura do Jogo:
-from jogador import Jogador 
-from banco import Banco
-from tabuleiro import Tabuleiro 
+
+# Importação CORRIGIDA para a nova estrutura de módulos (imports relativos dentro de src/)
+from .jogador import Jogador 
+from .banco import Banco
+from .tabuleiro import Tabuleiro 
+from .constantes import VALOR_PASSAGEM_SAIDA # Usamos a constante do novo arquivo!
 
 class Jogo:
-    VALOR_PASSAGEM_SAIDA = 200 # Regra clássica do Monopoly
+    # A constante VALOR_PASSAGEM_SAIDA foi removida daqui e está em constantes.py
 
     def __init__(self, nomes_jogadores):
         """Inicializa o Banco, o Tabuleiro e os Jogadores."""
@@ -44,27 +38,21 @@ class Jogo:
 
     def verificar_passagem_saida(self, jogador_obj, posicao_antiga, posicao_nova):
         """Verifica se o jogador passou pela casa 'Saída' e credita o valor."""
-        # Se a posição antiga era maior que a nova, significa que ele completou uma volta
         if posicao_nova < posicao_antiga:
-            print(f"  > **PASSOU PELA SAÍDA!** Recebe R${self.VALOR_PASSAGEM_SAIDA}.")
-            self.banco.depositar(jogador_obj.nome, self.VALOR_PASSAGEM_SAIDA)
+            print(f"  > **PASSOU PELA SAÍDA!** Recebe R${VALOR_PASSAGEM_SAIDA}.")
+            self.banco.depositar(jogador_obj.nome, VALOR_PASSAGEM_SAIDA)
 
     def acao_compra_propriedade(self, jogador, propriedade):
-        """Simula a ação de compra e o pagamento ao Banco."""
-        # Esta é uma lógica SIMPLIFICADA para a Versão Parcial
-        
-        # Pergunta ao jogador (em um sistema real seria via interface)
+        """Lógica SIMPLIFICADA de compra via console."""
         decisao = input(f"    Quer comprar {propriedade.nome} por R${propriedade.preco_compra}? (s/n): ").lower()
         
         if decisao == 's':
-            # Tenta realizar a transação financeira
             if self.banco.pagar(jogador.nome, propriedade.preco_compra, recebedor="Banco"):
-                # Transação bem-sucedida, atualiza o estado da propriedade
                 propriedade.proprietario = jogador
                 jogador.adicionar_propriedade(propriedade)
         else:
             print(f"    {jogador.nome} decide não comprar {propriedade.nome}.")
-            # Em uma partida real, a propriedade iria a leilão aqui.
+            # Lógica de leilão seria implementada aqui.
 
     def iniciar_turno(self):
         """Executa um turno completo para o jogador atual."""
@@ -72,7 +60,7 @@ class Jogo:
         posicao_antiga = jogador.posicao
         
         print(f"\n==========================================")
-        print(f"TURNO {self.indice_turno_atual + 1}: {jogador.nome} ({jogador.peca})")
+        print(f"TURNO DE: {jogador.nome} | Posição Inicial: {posicao_antiga}")
         print(f"==========================================")
         
         # 1. Rolagem de Dados e Movimentação
@@ -84,65 +72,43 @@ class Jogo:
         # 2. Verificação de Passagem pela Saída
         self.verificar_passagem_saida(jogador, posicao_antiga, posicao_nova)
 
-        # 3. Ação da Casa (Interação entre Tabuleiro, Jogador e Banco)
+        # 3. Ação da Casa (Chama a lógica específica, incluindo Imposto e Prisão)
         casa_atual = self.tabuleiro.get_casa(posicao_nova)
-        casa_atual.acao_ao_cair(jogador, self.banco) # Chamada da ação da Casa
         
-        # Ações específicas de Propriedade (Lógica de Compra)
-        if casa_atual.tipo == 'PROPRIEDADE':
-            propriedade = casa_atual # Casa é um objeto Propriedade
+        # Esta linha faz a magia da SCRUM-8 acontecer: 
+        # Se cair no Imposto, o acao_ao_cair de CasaImposto cobra.
+        # Se cair no Vá para a Prisão, o acao_ao_cair de CasaVAPrisao move o jogador.
+        casa_atual.acao_ao_cair(jogador, self.banco) 
+        
+        # 4. Ações de Propriedade (Compra/Aluguel)
+        if hasattr(casa_atual, 'is_livre'): 
+            propriedade = casa_atual 
             
             if propriedade.is_livre():
-                # Ação de Compra (Simulada via console)
-                self.acao_compra_propriedade(jogador, propriedade)
+                # ... (lógica de compra) IMPLEMENTAR...
+                pass
             
-            elif propriedade.proprietario.nome != jogador.nome:
-                # Ação de Pagamento de Aluguel
-                aluguel = propriedade.calcular_aluguel()
-                print(f"  > Pagando aluguel de R${aluguel} para {propriedade.proprietario.nome}...")
+            elif propriedade.proprietario and propriedade.proprietario.nome != jogador.nome:
                 
-                # O banco gerencia a transação (pagador, valor, recebedor)
-                if not self.banco.pagar(jogador.nome, aluguel, propriedade.proprietario.nome):
-                    self.jogadores.pop(self.indice_turno_atual)
-                    print(f"O jogador{self.jogadores[self.indice_turno_atual]} faliu")
-                    self.indice_turno_atual -=1
-                else:
-                    self.banco.pagar(jogador.nome, aluguel, propriedade.proprietario.nome)
+                # CHAVE DA CORREÇÃO: Passar a última rolagem do jogador
+                rolagem_para_aluguel = jogador.ultima_rolagem 
+                
+                aluguel = propriedade.calcular_aluguel(rolagem_dados=rolagem_para_aluguel) 
+                
+                print(f"  > Pagando aluguel de R${aluguel} para {propriedade.proprietario.nome}...")
+                self.banco.pagar(jogador.nome, aluguel, propriedade.proprietario.nome)
 
+        # 5. Mudar o Turno
         if not eh_duplo:
-            print("Vez do próximo jogaador")
-            self.indice_turno_atual = (self.indice_turno_atual + 1) % len(self.jogadores)
-            input("\n[Pressione Enter para ir para o próximo turno...]")
-        else:
-            print("Jogue novamente")
-            self.status_geral()
-            input("\n[Pressione Enter para ir para o próximo turno...]")
-
+             self.indice_turno_atual = (self.indice_turno_atual + 1) % len(self.jogadores)
+        
+        self.status_geral()
 
     def status_geral(self):
-        """
-        Exibe o status de todos os jogadores (Atende ao Requisito 04: Usabilidade/Monitoramento).
-        Este é o principal dado de monitoramento para a Versão Parcial.
-        """
+        """Exibe o status de todos os jogadores (Requisito 04: Usabilidade/Monitoramento)."""
         print("\n--- STATUS GERAL DOS JOGADORES ---")
         for jogador in self.jogadores:
             saldo = self.banco.consultar_saldo(jogador.nome)
             print(jogador.status_resumido(saldo))
 
-# --- Bloco de Demonstração para a Versão Parcial (main.py temporário) ---
-if __name__ == '__main__':
-    print("--- DEMONSTRAÇÃO DA VERSÃO PARCIAL: BACKEND ---")
-    
-    # Simulação da Inicialização da Partida (Requisito 08: Escalabilidade)
-    nomes = ["Alice (Humana)", "Bot 1 (IA)", "Carlos (Humano)"]
-    
-    jogo = Jogo(nomes)
-    print("\n[PARTIDA INICIADA]")
-    jogo.status_geral()
-
-    # Execução de alguns turnos para demonstrar a lógica (Requisito 10: Conformidade Regras)
-    for i in range(1, 4): # Simula 3 turnos (um para cada jogador)
-        jogo.iniciar_turno()
-        
-    print("\n--- FIM DA DEMONSTRAÇÃO ---")
-    print("O backend demonstrou: Transações Financeiras, Movimentação e Ações Básicas de Propriedade.")
+# O bloco de teste 'if __name__ == '__main__': ' foi movido para src/main.py
