@@ -29,5 +29,5 @@ jobs:
 
       - name: Run Monopoly project
         run: |
-          python jogo.py
+          python /src/jogo.py
         # executa o seu arquivo principal (mude o nome se for diferente)
