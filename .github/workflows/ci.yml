@@ -1,0 +1,33 @@
+name: Monopoly CI  # nome do workflow (aparece na aba Actions do GitHub)
+
+on:
+  push:
+    branches: [ main ]         # executa quando fizer push na branch main
+  pull_request:
+    branches: [ main ]         # executa quando abrir um Pull Request para main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest     # cria uma máquina virtual Ubuntu para rodar o workflow
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        # baixa o código do seu repositório Monopoly---GPMS
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+        # instala a versão 3.11 do Python
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+        # instala todas as bibliotecas listadas no requirements.txt
+
+      - name: Run Monopoly project
+        run: |
+          python jogo.py
+        # executa o seu arquivo principal (mude o nome se for diferente)
