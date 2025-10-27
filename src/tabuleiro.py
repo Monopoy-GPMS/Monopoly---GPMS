@@ -22,7 +22,7 @@ class Tabuleiro:
         self._add_casa_simples(nome="Cofre", tipo="COFRE") # 2
         
         # Grupo 1: Marrom
-        self._add_prop(nome="Praça da Sé", preco=60, aluguel=6, grupo="Marrom") # 3
+        self._add_prop(nome="Praça da Sé", preco=60,  grupo="Marrom") # 3
         
         # 4: Imposto de Renda
         self.casas.append(CasaImposto("Imposto de Renda", IMPOSTO_RENDA_VALOR)) # 4
