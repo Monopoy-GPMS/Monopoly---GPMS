@@ -75,7 +75,7 @@ class Jogo:
                              
                              propriedades_disp_hipoteca.append(propriedade)
                    if not propriedades_disp_hipoteca:
-                     print("Você não tem propriedades disponíveis para hipoteca")
+                     print("Você não tem propriedades disponíveis para hipotecar")
                      continue
                    else:
                       print("Qual propriedade deseja Hipotecar?")  
@@ -89,7 +89,7 @@ class Jogo:
                         indice_prop_esc = escolha_prop_hip - 1
                         if  0 <= indice_prop_esc < len(propriedades_disp_hipoteca):
                             prop_hipotecada = propriedades_disp_hipoteca[indice_prop_esc]
-                            valor_hipoteca = prop_hipotecada /2
+                            valor_hipoteca = prop_hipotecada.preco_compra /2
                             prop_hipotecada.hipotecada = True
                             self.banco.depositar(jogador.nome, valor_hipoteca)
                             print(f"  > Você hipotecou {prop_hipotecada.nome} e recebeu R${valor_hipoteca}.")
@@ -97,8 +97,41 @@ class Jogo:
                             print("Digite um valor válido")
                       except ValueError:
                         print("Digite um valor válido")
-    
+              elif decisao_hipoteca == '2':
+                  propriedades_hipotecadas = []
 
+                  for p in jogador.propriedades:
+                      if p.hipotecada == True:
+                        propriedades_hipotecadas.append(p)
+                        
+                  if not propriedades_hipotecadas:
+                      print("Não há hipotecas para serem pagas")
+                      continue
+                  else:
+                      for i, prp in enumerate(propriedades_hipotecadas):
+                          print(f"{i+1} - {prp.nome} - Total a Pagar: R${(prp.preco_compra/2 +((prp.preco_compra/2)*0.10))}")
+
+                      try:
+                        escolha_prop_hip = int(input("Digite o numero da propriedade (OU 0 PARA CANCELAR A AÇÃO)"))
+                        if escolha_prop_hip == 0:
+                            continue
+                        indice_prop_esc = escolha_prop_hip - 1
+                        if  0 <= indice_prop_esc < len(propriedades_hipotecadas):
+                            prop_a_pagar = propriedades_hipotecadas[indice_prop_esc]
+                            total_a_pagar = (prop_a_pagar.preco_compra/2 +((prop_a_pagar.preco_compra/2)*0.10))
+                            if self.banco.consultar_saldo(jogador.nome) < total_a_pagar:
+                                print("O jogador não tem saldo para a operação")
+                            else:
+                                self.banco.pagar(jogador.nome, total_a_pagar, "Banco")
+                                print("hipoteca paga")
+                                prop_a_pagar.hipotecada = False
+                        else:
+                            print("Digite um valor válido")
+                      except ValueError:
+                         print("Digite um valor válido")
+              elif decisao_hipoteca == '3':
+                  break
+                  
                    
                              
 
@@ -114,7 +147,15 @@ class Jogo:
         print(f"\n==========================================")
         print(f"TURNO DE: {jogador.nome} | Posição Inicial: {posicao_antiga}")
         print(f"==========================================")
-            
+
+        print(f"\n==========================================")
+        decisao_gerenciar = input("Deseja Gerenciar Suas Propriedades? (s/n)")
+        print(f"==========================================")
+
+        if decisao_gerenciar.lower() == 's':
+            self.gerenciar_propriedades(jogador)
+
+
             # 1. Rolagem de Dados e Movimentação
         rolagem, eh_duplo = self.rolar_dados()
         jogador.ultima_rolagem = rolagem

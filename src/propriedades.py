@@ -5,10 +5,11 @@ from casas import Casa
 class Propriedade(Casa):
     """Herda de Casa. Representa propriedades compráveis."""
     # (Cole o código do __init__ e dos métodos da Propriedade aqui)
-    def __init__(self, nome, preco_compra, aluguel_base, grupo_cor, aluguel_passagem=200):
+    def __init__(self, nome, preco_compra, grupo_cor, aluguel_passagem=200):
         super().__init__(nome, 'PROPRIEDADE') # Agora herda de Casa em casas.py
         self.preco_compra = preco_compra
-        self.aluguel_base = aluguel_base
+        self.alugueis = [6, 30, 90, 270, 400, 550] ##a lista de valores de alugueis está constante por enquanto, MUDAR DEPOIS
+        ##self.preco_casa = preco_casa
         self.grupo_cor = grupo_cor        # Ex: "Roxo", "Ferrovia", "Serviço Público"
         self.proprietario = None          # Objeto Jogador que é o dono
         self.casas = 0                    # 0 a 4 (Hotel)
@@ -19,13 +20,15 @@ class Propriedade(Casa):
         """Verifica se a propriedade está disponível para compra."""
         return self.proprietario is None
 
-    def calcular_aluguel(self):
+    def calcular_aluguel(self, rolagem_dados):
         """Lógica simplificada para calcular o aluguel (será expandida)."""
         # Lógica inicial: apenas aluguel base se tiver proprietário.
-        if self.proprietario and not self.hipotecada:
+        if not self.proprietario or  self.hipotecada:
             # Em uma versão completa, usaria self.casas para calcular o aluguel exato
-            return self.aluguel_base 
-        return 0
+            return 0
+        
+        return self.alugueis[self.casas] 
+        
 
     def acao_ao_cair(self, jogador, banco):
         """Ação específica de uma Propriedade ao cair."""
@@ -45,7 +48,7 @@ class Propriedade(Casa):
 class CasaMetro(Propriedade):
     def __init__(self, nome, preco, grupo="METRÔ"):
         # Aluguel base não é usado, mas mantemos 25 para herança
-        super().__init__(nome, preco, aluguel_base=25, grupo_cor=grupo)
+        super().__init__(nome, preco, grupo_cor=grupo)
         
     def calcular_aluguel(self, rolagem_dados=0):
         # O aluguel do metrô depende do número de metrôs que o proprietário possui.
@@ -63,7 +66,7 @@ class CasaMetro(Propriedade):
 class CasaCompanhia(Propriedade):
     def __init__(self, nome, preco, grupo="SERVIÇO"):
         # Aluguel base não é usado
-        super().__init__(nome, preco, aluguel_base=0, grupo_cor=grupo)
+        super().__init__(nome, preco, grupo_cor=grupo)
         
     def calcular_aluguel(self, rolagem_dados): # Requer a rolagem
         if not self.proprietario: return 0
