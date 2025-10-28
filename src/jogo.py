@@ -17,6 +17,8 @@ class Jogo:
         self.banco = Banco()
         self.tabuleiro = Tabuleiro()
         self.jogadores = []
+        self.ultimo_d1 = 1 # Valor inicial dado 1
+        self.ultimo_d2 = 1 # Valor inicial dado 2
 
         # Inicializa o objeto Jogador e a conta no Banco para cada nome
         for i, nome in enumerate(nomes_jogadores):
@@ -34,7 +36,7 @@ class Jogo:
         total = d1 + d2
         eh_duplo = d1 == d2
         print(f"  > Dados rolados: {d1} e {d2}. Total: {total} ({'DUPLO!' if eh_duplo else 'Simples'})")
-        return total, eh_duplo
+        return d1, d2, total, eh_duplo
 
     def verificar_passagem_saida(self, jogador_obj, posicao_antiga, posicao_nova):
         """Verifica se o jogador passou pela casa 'Saída' e credita o valor."""
@@ -64,7 +66,9 @@ class Jogo:
         print(f"==========================================")
         
         # 1. Rolagem de Dados e Movimentação
-        rolagem, eh_duplo = self.rolar_dados()
+        d1, d2, rolagem, eh_duplo = self.rolar_dados()
+        self.ultimo_d1 = d1
+        self.ultimo_d2 = d2
         jogador.mover(rolagem) 
         
         posicao_nova = jogador.posicao
