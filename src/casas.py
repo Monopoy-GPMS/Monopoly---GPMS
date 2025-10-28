@@ -1,6 +1,6 @@
 # src/casas.py
 # Importação relativa, assumindo que constantes está no mesmo nível (src/)
-from src.constantes import IMPOSTO_RENDA_VALOR, POSICAO_PRISAO
+from constantes import IMPOSTO_RENDA_VALOR, POSICAO_PRISAO
 
 class Casa:
     """Classe base para qualquer espaço no tabuleiro (40 no total)."""

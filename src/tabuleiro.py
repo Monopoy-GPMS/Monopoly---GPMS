@@ -1,9 +1,9 @@
 # src/tabuleiro.py
 
 # Importação dos novos módulos e classes
-from src.casas import Casa, CasaImposto, CasaVAPrisao 
-from src.propriedades import Propriedade, CasaMetro, CasaCompanhia
-from src.constantes import IMPOSTO_RENDA_VALOR, VALOR_FERROVIA, VALOR_COMPANHIA_SERVICO, TAXA_RIQUEZA_VALOR
+from casas import Casa, CasaImposto, CasaVAPrisao 
+from propriedades import Propriedade, CasaMetro, CasaCompanhia
+from constantes import IMPOSTO_RENDA_VALOR, VALOR_FERROVIA, VALOR_COMPANHIA_SERVICO, TAXA_RIQUEZA_VALOR
 
 class Tabuleiro:
     def __init__(self):

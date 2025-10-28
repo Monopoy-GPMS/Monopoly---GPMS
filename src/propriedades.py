@@ -1,6 +1,6 @@
 # src/propriedades.py
 # Importação relativa para usar a classe Casa base
-from src.casas import Casa 
+from casas import Casa 
 
 class Propriedade(Casa):
     """Herda de Casa. Representa propriedades compráveis."""
