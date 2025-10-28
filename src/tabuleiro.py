@@ -16,13 +16,13 @@ class Tabuleiro:
         self._add_casa_simples(nome="Ponto de Partida", tipo="INICIO") # 0 - Esta é a casa 0 (Ponto de partida)
         
         # Grupo 1: Marrom (Rua Sumaré, Praça da Sé)
-        self._add_prop(nome="Avenida Sumaré", preco=60, aluguel=6, grupo="Marrom") # 1
+        self._add_prop(nome="Avenida Sumaré", preco=60, aluguel=2, grupo="Marrom") # 1
         
         # 2: Cofre
         self._add_casa_simples(nome="Cofre", tipo="COFRE") # 2
         
         # Grupo 1: Marrom
-        self._add_prop(nome="Praça da Sé", preco=60, aluguel=6, grupo="Marrom") # 3
+        self._add_prop(nome="Praça da Sé", preco=60, aluguel=4, grupo="Marrom") # 3
         
         # 4: Imposto de Renda
         self.casas.append(CasaImposto("Imposto de Renda", IMPOSTO_RENDA_VALOR)) # 4
@@ -31,79 +31,79 @@ class Tabuleiro:
         self.casas.append(CasaMetro(nome="Estação de Metrô Maracanã", preco=VALOR_FERROVIA)) # 5 - AGORA USA CASA METRO
         
         # Grupo 3: Azul Claro (Rua 25 de Março, Av. São João, Av. Paulista)
-        self._add_prop(nome="Rua 25 de Março", preco=100, aluguel=10, grupo="Azul Claro") # 6
+        self._add_prop(nome="Rua 25 de Março", preco=100, aluguel=6, grupo="Azul Claro") # 6
         
         # 7: Sorte ou Revés
         self._add_casa_simples(nome="Sorte ou Revés", tipo="SORTE") # 7
         
         # Grupo 3: Azul Claro
-        self._add_prop(nome="Avenida São João", preco=100, aluguel=10, grupo="Azul Claro") # 8
-        self._add_prop(nome="Avenida Paulista", preco=120, aluguel=12, grupo="Azul Claro") # 9
+        self._add_prop(nome="Avenida São João", preco=100, aluguel=6, grupo="Azul Claro") # 8
+        self._add_prop(nome="Avenida Paulista", preco=120, aluguel=8, grupo="Azul Claro") # 9
         
         # 10: Cadeia/Prisão
         self._add_casa_simples(nome="Cadeia/Prisão", tipo="PRISAO") # 10 (Casa "normal" de parada)
         
         # Grupo 4: Rosa (Av. Vieira Souto, Niterói, Av. Atlântica)
-        self._add_prop(nome="Avenida Vieira Souto", preco=140, aluguel=14, grupo="Rosa") # 11
+        self._add_prop(nome="Avenida Vieira Souto", preco=140, aluguel=10, grupo="Rosa") # 11
         
         # 12: Companhia Elétrica
         self.casas.append(CasaCompanhia(nome="Companhia Elétrica", preco=VALOR_COMPANHIA_SERVICO)) # 12 - AGORA USA CASA COMPANHIA
         
         # Grupo 4: Rosa
-        self._add_prop(nome="Niterói", preco=140, aluguel=14, grupo="Rosa") # 13
-        self._add_prop(nome="Avenida Atlântica", preco=160, aluguel=16, grupo="Rosa") # 14
+        self._add_prop(nome="Niterói", preco=140, aluguel=10, grupo="Rosa") # 13
+        self._add_prop(nome="Avenida Atlântica", preco=160, aluguel=12, grupo="Rosa") # 14
         
         # Grupo 2: Metrô/Ferrovia
         self.casas.append(CasaMetro(nome="Estação de Metrô Carioca", preco=VALOR_FERROVIA)) # 15
         
         # Grupo 5: Laranja (Av. Pres. Juscelino Kubitschek, Av. Eng. Luís Carlos Berrini, Av. Brig. Faria Lima)
-        self._add_prop(nome="Avenida Presidente Juscelino Kubitschek", preco=180, aluguel=18, grupo="Laranja") # 16
+        self._add_prop(nome="Avenida Presidente Juscelino Kubitschek", preco=180, aluguel=14, grupo="Laranja") # 16
         
         # 17: Cofre
         self._add_casa_simples(nome="Cofre", tipo="COFRE") # 17
         
         # Grupo 5: Laranja
-        self._add_prop(nome="Avenida Engenheiro Luis Carlos Berrini", preco=180, aluguel=18, grupo="Laranja") # 18
-        self._add_prop(nome="Avenida Brigadeiro Faria Lima", preco=200, aluguel=20, grupo="Laranja") # 19
+        self._add_prop(nome="Avenida Engenheiro Luis Carlos Berrini", preco=180, aluguel=14, grupo="Laranja") # 18
+        self._add_prop(nome="Avenida Brigadeiro Faria Lima", preco=200, aluguel=16, grupo="Laranja") # 19
         
         # 20: Estacionamento Grátis
         self._add_casa_simples(nome="Estacionamento Grátis", tipo="GRATIS") # 20
         
         # Grupo 6: Vermelho (Ipanema, Leblon, Copacabana)
-        self._add_prop(nome="Ipanema", preco=220, aluguel=22, grupo="Vermelho") # 21
+        self._add_prop(nome="Ipanema", preco=220, aluguel=18, grupo="Vermelho") # 21
         
         # 22: Sorte ou Revés
         self._add_casa_simples(nome="Sorte ou Revés", tipo="SORTE") # 22
         
         # Grupo 6: Vermelho
-        self._add_prop(nome="Leblon", preco=220, aluguel=22, grupo="Vermelho") # 23
-        self._add_prop(nome="Copacabana", preco=120, aluguel=12, grupo="Vermelho") # 24
+        self._add_prop(nome="Leblon", preco=220, aluguel=18, grupo="Vermelho") # 23
+        self._add_prop(nome="Copacabana", preco=120, aluguel=20, grupo="Vermelho") # 24
         
         # Grupo 2: Metrô/Ferrovia
         self.casas.append(CasaMetro(nome="Estação de Metrô Consolação", preco=VALOR_FERROVIA)) # 25
         
         # Grupo 7: Amarelo (Av. Cidade Jardim, Pacaembu, Ibirapuera)
-        self._add_prop(nome="Avenida Cidade Jardim", preco=240, aluguel=24, grupo="Amarelo") # 26
-        self._add_prop(nome="Pacaembu", preco=260, aluguel=26, grupo="Amarelo") # 27
+        self._add_prop(nome="Avenida Cidade Jardim", preco=240, aluguel=22, grupo="Amarelo") # 26
+        self._add_prop(nome="Pacaembu", preco=260, aluguel=22, grupo="Amarelo") # 27
         
         # 28: Companhia de Distribuição de Água
         self.casas.append(CasaCompanhia(nome="Companhia de Distribuição de Água", preco=VALOR_COMPANHIA_SERVICO)) # 28
         
         # Grupo 7: Amarelo
-        self._add_prop(nome="Ibirapuera", preco=280, aluguel=28, grupo="Amarelo") # 29
+        self._add_prop(nome="Ibirapuera", preco=280, aluguel=24, grupo="Amarelo") # 29
         
         # 30: VÁ PARA A CADEIA (Foco da SCRUM-8)
         self.casas.append(CasaVAPrisao()) # 30
         
         # Grupo 8: Verde (Barra da Tijuca, Jardim Botânico, Lagoa Rodrigo de Freitas)
-        self._add_prop(nome="Barra da Tijuca", preco=300, aluguel=30, grupo="Verde") # 31
-        self._add_prop(nome="Jardim Botânico", preco=300, aluguel=30, grupo="Verde") # 32
+        self._add_prop(nome="Barra da Tijuca", preco=300, aluguel=26, grupo="Verde") # 31
+        self._add_prop(nome="Jardim Botânico", preco=300, aluguel=26, grupo="Verde") # 32
         
         # 33: Cofre
         self._add_casa_simples(nome="Cofre", tipo="COFRE") # 33
         
         # Grupo 8: Verde
-        self._add_prop(nome="Lagoa Rodrigo de Freitas", preco=320, aluguel=32, grupo="Verde") # 34
+        self._add_prop(nome="Lagoa Rodrigo de Freitas", preco=320, aluguel=28, grupo="Verde") # 34
         
         # Grupo 2: Metrô/Ferrovia
         self.casas.append(CasaMetro(nome="Estação de Metrô República", preco=VALOR_FERROVIA)) # 35
@@ -118,7 +118,7 @@ class Tabuleiro:
         self.casas.append(CasaImposto("Taxa de Riqueza", TAXA_RIQUEZA_VALOR)) # 38
         
         # Grupo 9: Azul Escuro
-        self._add_prop(nome="Rua Oscar Freire", preco=400, aluguel=40, grupo="Azul Escuro") # 39
+        self._add_prop(nome="Rua Oscar Freire", preco=400, aluguel=50, grupo="Azul Escuro") # 39
         
         # O Ponto de Partida (Posição 0) é a Casa[0] (Saída/GO).
         
