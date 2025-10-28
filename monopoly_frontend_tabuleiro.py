@@ -84,6 +84,9 @@ PEAO_OFFSETS = [
     ( PEAO_SIZE // 2,  PEAO_SIZE // 2), # Canto Inferior Direito
 ]
 
+# ========= Animacao =========
+ANIMATION_STEP_MS = 150
+
 # ========= Callbacks =========
 _ON_CLICK: List[Callable[[int, Any, Any], None]] = []
 SQUARE_CLICKED = pygame.USEREVENT + 1    
@@ -218,17 +221,22 @@ def draw_player_panels(screen, jogadores, banco, fonts):
 
 # ========= Funções de Desenho do Peão =========
 
-def draw_peoes(screen, jogo_obj, peao_images, board_offset):
+def draw_peoes(screen, peoes_posicoes_visuais, peao_images, board_offset, jogadores_backend):
     """
     Desenha todos os peões no tabuleiro com base em suas posições.
     """
     board_x_offset, board_y_offset = board_offset
     
-    for i, jogador in enumerate(jogo_obj.jogadores):
+    for i, jogador in enumerate(jogadores_backend):
         
         # 1. Determinar a Posição Lógica (0-39)
         # Se estiver na prisão, a posição visual é SEMPRE a da prisão (10)
-        posicao_logica = POSICAO_PRISAO if jogador.em_prisao else jogador.posicao
+        posicao_visual = peoes_posicoes_visuais[i]
+        
+        if jogador.em_prisao:
+             posicao_visual = POSICAO_PRISAO
+             # Atualiza a posição visual para o futuro
+             peoes_posicoes_visuais[i] = POSICAO_PRISAO 
 
         # 2. Obter a Imagem do Peão
         peao_img = peao_images[i % len(peao_images)]
@@ -236,7 +244,7 @@ def draw_peoes(screen, jogo_obj, peao_images, board_offset):
         # 3. Converter Posição Lógica para Coordenadas
         try:
             # Pega o retângulo LOCAL (relativo ao tabuleiro)
-            local_rect = pos_to_rect(posicao_logica)
+            local_rect = pos_to_rect(posicao_visual)
             lx, ly, lw, lh = local_rect
             
             # Calcula o CENTRO da casa
@@ -254,7 +262,7 @@ def draw_peoes(screen, jogo_obj, peao_images, board_offset):
             screen.blit(peao_img, (draw_x, draw_y))
             
         except Exception as e:
-            print(f"Erro ao desenhar peão para {jogador.nome} na pos {posicao_logica}: {e}")
+            print(f"Erro ao desenhar peão para {jogador.nome} na pos {posicao_visual}: {e}")
 
 # ========= UI principal =========
 def main():
@@ -382,9 +390,15 @@ def main():
         30   # Altura do botão
     )
 
+    game_state = "IDLE" 
+    animation_queue = [] 
+    animation_timer = 0
+    peoes_posicoes_visuais = [jogador.posicao for jogador in jogo.jogadores]
+
     # --- 7. Loop Principal do Jogo ---
     running = True
     while running:
+        current_time = pygame.time.get_ticks()
         # --- 1. Processamento de Eventos (TESTE DOS DADOS) ---
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -396,12 +410,44 @@ def main():
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 
                 # A. Clique no Botão "Lançar Dados"
-                if btn_lancar_dados_rect.collidepoint(event.pos):
+                if btn_lancar_dados_rect.collidepoint(event.pos) and game_state == "IDLE":
                     print("[AÇÃO] Lançar Dados / Próximo Turno...")
+                    # 1. Trava o jogo para animação
+                    game_state = "ANIMATING"
+                    
+                    # 2. Pega o jogador e a posição VISUAL antiga
+                    indice_jogador = jogo.indice_turno_atual
+                    jogador_atual = jogo.jogadores[indice_jogador]
+                    pos_visual_antiga = peoes_posicoes_visuais[indice_jogador]
+
+                    # 3. Atualiza a posição LÓGICA no backend
                     jogo.iniciar_turno() 
-                
+
+                    # 4. Pega os resultados do backend
+                    rolagem_total = jogo.ultimo_d1 + jogo.ultimo_d2
+                    pos_logica_final = jogador_atual.posicao
+                    foi_preso = jogador_atual.em_prisao
+                    
+                    # 5. Calcula a Posição Intermediária (onde ele parou ANTES de ser preso)
+                    pos_intermediaria = (pos_visual_antiga + rolagem_total) % 40
+                    
+                    # 6. Gera a fila de animação
+                    # Primeiro, anima o peão da posição antiga até a casa onde caiu
+                    passos_para_animar = (pos_intermediaria - pos_visual_antiga + 40) % 40
+                    
+                    for i in range(1, passos_para_animar + 1):
+                        proxima_pos = (pos_visual_antiga + i) % 40
+                        animation_queue.append((indice_jogador, proxima_pos))
+                    
+                    # 7. Se foi preso (Vá para a Prisão), adiciona um "teleporte"
+                    if foi_preso and pos_logica_final == POSICAO_PRISAO and pos_intermediaria != POSICAO_PRISAO:
+                        print("  > Detectado 'Vá para a Prisão'! Animando para 30 e pulando para 10.")
+                        animation_queue.append((indice_jogador, POSICAO_PRISAO))
+                    
+                    animation_timer = current_time
+
                 # B. Clique no Botão "Fazer uma proposta"
-                elif btn_proposta_rect.collidepoint(event.pos):
+                elif btn_proposta_rect.collidepoint(event.pos) and game_state == "IDLE":
                     print("[AÇÃO] Fazer uma proposta (Funcionalidade a ser implementada)...")
                     # (Lógica futura aqui)
 
@@ -423,6 +469,14 @@ def main():
                         pygame.event.post(pygame.event.Event(SQUARE_CLICKED, {"pos": pos, "casa": casa, "board": board}))
 
 
+        if game_state == "ANIMATING":
+            if not animation_queue:
+                game_state = "IDLE"
+            elif current_time - animation_timer > ANIMATION_STEP_MS:
+                animation_timer = current_time
+                indice_jogador, pos_alvo = animation_queue.pop(0)
+                peoes_posicoes_visuais[indice_jogador] = pos_alvo
+
         # --- Lógica de Desenho ---
         
         screen.fill(COLOR_BG)
@@ -431,7 +485,8 @@ def main():
         screen.blit(bg, board_blit_pos)
         
         # Desenha os Peões
-        draw_peoes(screen, jogo, peao_images, board_blit_pos)
+        # --- ANIMAÇÃO: Passa as posições VISUAIS e os jogadores do backend
+        draw_peoes(screen, peoes_posicoes_visuais, peao_images, board_blit_pos, jogo.jogadores)
         
         # Desenha os Painéis Laterais
         draw_player_panels(screen, jogo.jogadores, jogo.banco, fonts)
@@ -469,7 +524,8 @@ def main():
         txt_rect = btn_txt.get_rect(center=btn_proposta_rect.center)
         screen.blit(btn_txt, txt_rect)
         
-        pygame.draw.rect(screen, COLOR_BUTTON_LANCAR, btn_lancar_dados_rect, border_radius=5)
+        cor_botao_lancar = COLOR_DICE_BG if game_state == "ANIMATING" else COLOR_BUTTON_LANCAR
+        pygame.draw.rect(screen, cor_botao_lancar, btn_lancar_dados_rect, border_radius=5)
         btn_txt = fonts["status"].render("Lançar Dados", True, COLOR_TEXT_TITLE)
         txt_rect = btn_txt.get_rect(center=btn_lancar_dados_rect.center)
         screen.blit(btn_txt, txt_rect)
