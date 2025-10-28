@@ -5,7 +5,7 @@ Monopoly BR - Interface Principal (Frontend + Jogo)
 - Layout LADO A LADO (1800x1200)
 - Painéis opacos de 300px nas laterais.
 - Tabuleiro de 1200x1200 no meio.
-- Exibe imagens dos dados no centro.
+- Painel central com "Vez de:", dados e botões de ação.
 
 Execução:
   python monopoly_frontend_tabuleiro.py
@@ -14,7 +14,6 @@ Execução:
 import os
 import sys
 from typing import Callable, List, Optional, Any, Tuple
-
 import pygame
 
 # ========= Importa backend de ./src =========
@@ -38,27 +37,29 @@ except Exception:
     backend = None
 
 # ========= Configuração da janela / layout (MODIFICADO) =========
-WINDOW_WIDTH = 1800      # 300 (painel) + 1200 (tabuleiro) + 300 (painel)
-WINDOW_HEIGHT = 1200     # Altura total
+WINDOW_WIDTH = 1500      # Largura da janela
+WINDOW_HEIGHT = 1000     # Altura da janela
 PANEL_WIDTH = 300
-BOARD_SIZE = 1200
+BOARD_SIZE = 900
 
 # Definição das áreas principais (LADO A LADO)
 LEFT_PANEL_RECT = pygame.Rect(0, 0, PANEL_WIDTH, WINDOW_HEIGHT)
 BOARD_RECT = pygame.Rect(PANEL_WIDTH, 0, BOARD_SIZE, WINDOW_HEIGHT) 
 RIGHT_PANEL_RECT = pygame.Rect(PANEL_WIDTH + BOARD_SIZE, 0, PANEL_WIDTH, WINDOW_HEIGHT)
 
-# ========= Cores e Fontes (MODIFICADO) =========
+# ========= Cores e Fontes =========
 COLOR_BG = (20, 20, 20)
-COLOR_PANEL_BG = (40, 40, 40) # Fundo OPACO para os painéis
+COLOR_PANEL_BG = (40, 40, 40) 
 COLOR_TEXT = (220, 220, 220)
 COLOR_TEXT_TITLE = (255, 255, 255)
 COLOR_SALDO = (100, 255, 100)
-COLOR_BUTTON = (0, 150, 0)
-COLOR_BUTTON_DEBUG = (180, 0, 0) 
+COLOR_BUTTON_LANCAR = (255, 0, 0) # Vermelho para Lançar Dados
+COLOR_BUTTON_PROPOSTA = (255, 165, 0) # Laranja para Proposta
 COLOR_AVISO_PRISAO = (255, 100, 100) 
+COLOR_CENTRAL_PANEL_BG = (80, 80, 80) # Cinza um pouco mais claro
+COLOR_DICE_BG = (120, 120, 120)       # Fundo dos dados
 
-# ========= Geometria do Tabuleiro (A que você pediu) =========
+# --- Geometria do Tabuleiro (para cliques) ---
 BOARD_MARGIN = 30        
 SQUARE_W = 80            
 SQUARE_H = 120           
@@ -67,8 +68,10 @@ CORNER = 120
 IMG_NAME = "monopoly_board_preview.png"
 
 # ========= Configuração dos Dados =========
-DICE_SIZE = 80  # Tamanho de cada imagem de dado (80x80)
-DICE_GAP = 20   # Espaço entre os dados
+DICE_SIZE = 60  # Tamanho de cada imagem de dado
+DICE_GAP = 30   # Espaço entre os dados
+CENTRAL_PANEL_WIDTH = 400
+CENTRAL_PANEL_HEIGHT = 150
 
 # ========= Callbacks =========
 _ON_CLICK: List[Callable[[int, Any, Any], None]] = []
@@ -134,11 +137,11 @@ def draw_player_info(screen, jogador, banco, x_start, y_start, max_width, fonts)
     nome_txt = fonts["titulo"].render(jogador.nome, True, COLOR_TEXT_TITLE)
     nome_rect = nome_txt.get_rect(centerx=centro_x_painel, top=y_start)
     screen.blit(nome_txt, nome_rect)
-    y_curr = y_start + 40 
+    y_curr = y_start + 25 
 
     # 2. Saldo (Centralizado)
     saldo = banco.consultar_saldo(jogador.nome)
-    saldo_texto = f"$ {saldo} M" 
+    saldo_texto = f"${saldo}M" 
     saldo_surf = fonts["normal"].render(saldo_texto, True, COLOR_SALDO)
     saldo_rect = saldo_surf.get_rect(centerx=centro_x_painel, top=y_curr)
     screen.blit(saldo_surf, saldo_rect)
@@ -146,12 +149,12 @@ def draw_player_info(screen, jogador, banco, x_start, y_start, max_width, fonts)
 
     # 3. Status (Prisão) (Alinhado à esquerda)
     if jogador.em_prisao:
-        status_txt = fonts["normal"].render("Status: NA PRISÃO", True, COLOR_AVISO_PRISAO)
+        status_txt = fonts["status"].render("Status: NA PRISÃO", True, COLOR_AVISO_PRISAO)
         screen.blit(status_txt, (x_start, y_curr)) 
         y_curr += 35 
 
     # 4. Propriedades (Alinhado à esquerda)
-    props_titulo = fonts["normal"].render("Propriedades:", True, COLOR_TEXT_TITLE)
+    props_titulo = fonts["status"].render("Propriedades:", True, COLOR_TEXT_TITLE)
     screen.blit(props_titulo, (x_start, y_curr))
     y_curr += 25
     
@@ -169,18 +172,15 @@ def draw_player_info(screen, jogador, banco, x_start, y_start, max_width, fonts)
                 break
 
 def draw_player_panels(screen, jogadores, banco, fonts):
-    """(ATUALIZADO) Desenha os painéis com fundo opaco."""
     
-    # --- NOVO: Desenha fundos opacos ---
+    # Desenha painéis laterais
     pygame.draw.rect(screen, COLOR_PANEL_BG, LEFT_PANEL_RECT)
     pygame.draw.rect(screen, COLOR_PANEL_BG, RIGHT_PANEL_RECT)
-    
-    # --- O restante da lógica (desenhar texto) é o mesmo ---
     
     j1 = jogadores[0] if len(jogadores) > 0 else None
     j2 = jogadores[1] if len(jogadores) > 1 else None
     j3 = jogadores[2] if len(jogadores) > 2 else None
-    j4 = jogadores[3] if len(jogadores) > 3 else None # Corrigido índice
+    j4 = jogadores[3] if len(jogadores) > 3 else None
 
     info_width = PANEL_WIDTH - 20 
     
@@ -197,7 +197,7 @@ def draw_player_panels(screen, jogadores, banco, fonts):
 def main():
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-    pygame.display.set_caption("Monopoly BR - Interface Gráfica (1800x1200)")
+    pygame.display.set_caption("Monopoly BR")
     clock = pygame.time.Clock()
 
     # Inicializa fontes
@@ -206,14 +206,14 @@ def main():
             "titulo": pygame.font.SysFont(None, 36),
             "normal": pygame.font.SysFont(None, 28),
             "props": pygame.font.SysFont(None, 24),
-            "debug": pygame.font.SysFont(None, 20),
+            "status": pygame.font.SysFont(None, 20),
         }
     except Exception:
         fonts = {
             "titulo": pygame.font.Font(None, 36),
             "normal": pygame.font.Font(None, 28),
             "props": pygame.font.Font(None, 24),
-            "debug": pygame.font.Font(None, 20),
+            "status": pygame.font.Font(None, 20),
         }
 
     # Carregar Imagens dos Dados
@@ -229,8 +229,7 @@ def main():
         pygame.quit()
         sys.exit(1)
 
-
-    # Carrega imagem de fundo
+    # Carregar Tabuleiro
     img_path = os.path.join(BASE_DIR, IMG_NAME)
     if not os.path.exists(img_path):
         raise SystemExit(f"Imagem '{IMG_NAME}' não encontrada em {BASE_DIR}.")
@@ -242,7 +241,8 @@ def main():
         bg = pygame.transform.scale(bg, (BOARD_SIZE, BOARD_SIZE))
 
     
-    # Posição de blit do tabuleiro (MODIFICADO: Lado a Lado)
+    # --- 4. Calcular Posições e Áreas ---
+    # Posição do Tabuleiro (centralizado, entre os painéis)
     board_blit_x = PANEL_WIDTH  # Começa depois do painel esquerdo
     board_blit_y = 0
     board_blit_pos = (board_blit_x, board_blit_y)
@@ -250,21 +250,34 @@ def main():
     # Área de Clique do Tabuleiro
     BOARD_AREA_RECT = pygame.Rect(board_blit_pos[0], board_blit_pos[1], BOARD_SIZE, BOARD_SIZE)
 
-    # Calcular Posições dos Dados
-    # (Esta lógica ainda funciona, pois BOARD_AREA_RECT está correto)
-    board_center_x = BOARD_AREA_RECT.centerx
-    board_center_y = BOARD_AREA_RECT.centery
+    # Posição do Painel com os dados
+    original_center_x = BOARD_AREA_RECT.centerx
+    original_center_y = BOARD_AREA_RECT.centery
+
+    new_center_x = original_center_x - 120
+    new_center_y = original_center_y + 250
     
-    DICE_POS_1 = (
-        board_center_x - DICE_SIZE - (DICE_GAP // 2),
-        board_center_y - (DICE_SIZE // 2)
-    )
-    DICE_POS_2 = (
-        board_center_x + (DICE_GAP // 2),
-        board_center_y - (DICE_SIZE // 2)
+    CENTRAL_PANEL_RECT = pygame.Rect(
+        new_center_x - (CENTRAL_PANEL_WIDTH // 2),
+        new_center_y - (CENTRAL_PANEL_HEIGHT // 2),
+        CENTRAL_PANEL_WIDTH,
+        CENTRAL_PANEL_HEIGHT
     )
 
-    # Instancia o Jogo (Backend)
+    # Posição dos Dados (relativo ao Painel Central)
+    total_dice_display_width = (DICE_SIZE * 2) + DICE_GAP
+    dice_area_x = CENTRAL_PANEL_RECT.x + CENTRAL_PANEL_RECT.width - total_dice_display_width - 15 # margem direita
+
+    DICE_POS_1 = (
+        dice_area_x,
+        CENTRAL_PANEL_RECT.centery - (DICE_SIZE // 2)
+    )
+    DICE_POS_2 = (
+        dice_area_x + DICE_SIZE + DICE_GAP,
+        CENTRAL_PANEL_RECT.centery - (DICE_SIZE // 2)
+    )
+    
+    # --- 5. Inicialização do Backend (Jogo) ---
     try:
         nomes_jogadores = ["Jogador 1", "Jogador 2", "Jogador 3", "Jogador 4"]
         jogo = Jogo(nomes_jogadores)
@@ -274,55 +287,46 @@ def main():
         pygame.quit()
         sys.exit(1)
 
-    # --- Definição dos Botões ---
-    btn_turno_rect = pygame.Rect(LEFT_PANEL_RECT.x + 20, WINDOW_HEIGHT - 70, PANEL_WIDTH - 40, 50)
-    btn_comprar_rect = pygame.Rect(RIGHT_PANEL_RECT.x + 20, WINDOW_HEIGHT - 130, PANEL_WIDTH - 40, 50)
-    btn_prisao_rect = pygame.Rect(RIGHT_PANEL_RECT.x + 20, WINDOW_HEIGHT - 70, PANEL_WIDTH - 40, 50)
+    # --- 6. Definição dos Botões da UI (no Painel Central) ---
+    btn_proposta_rect = pygame.Rect(
+        CENTRAL_PANEL_RECT.x + 10, # Margem esquerda
+        CENTRAL_PANEL_RECT.y + 70, # Margem superior relativa"
+        130, # Largura do botão
+        30   # Altura do botão
+    )
+    btn_lancar_dados_rect = pygame.Rect(
+        CENTRAL_PANEL_RECT.x + 10, # Margem esquerda
+        CENTRAL_PANEL_RECT.y + 110, # Margem superior relativa
+        130, # Largura do botão
+        30   # Altura do botão
+    )
 
+    # --- 7. Loop Principal do Jogo ---
     running = True
     while running:
-        # --- 1. Processamento de Eventos (MODIFICADO) ---
+        # --- 1. Processamento de Eventos (TESTE DOS DADOS) ---
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 running = False
 
-            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 
-                # A. Botão de Próximo Turno
-                if btn_turno_rect.collidepoint(event.pos):
-                    print("[AÇÃO] Próximo Turno...")
+                # A. Clique no Botão "Lançar Dados"
+                if btn_lancar_dados_rect.collidepoint(event.pos):
+                    print("[AÇÃO] Lançar Dados / Próximo Turno...")
                     jogo.iniciar_turno() 
                 
-                # B. Botão Debug Prisão
-                elif btn_prisao_rect.collidepoint(event.pos):
-                    jogador_atual = jogo.jogadores[jogo.indice_turno_atual]
-                    jogador_atual.em_prisao = True
-                    jogador_atual.posicao = POSICAO_PRISAO
-                    print(f"[DEBUG] Forçando prisão do {jogador_atual.nome}")
-                
-                # C. Botão Debug Compra
-                elif btn_comprar_rect.collidepoint(event.pos):
-                    jogador_atual = jogo.jogadores[jogo.indice_turno_atual]
-                    propriedade = jogo.tabuleiro.get_casa(1) # Av. Sumaré
-                    
-                    if propriedade and hasattr(propriedade, 'is_livre'):
-                        if propriedade.is_livre():
-                            if jogo.banco.pagar(jogador_atual.nome, propriedade.preco_compra, "Banco"):
-                                propriedade.proprietario = jogador_atual
-                                jogador_atual.adicionar_propriedade(propriedade)
-                            else:
-                                print(f"[DEBUG] {jogador_atual.nome} não tem saldo para comprar.")
-                        else:
-                            print(f"[DEBUG] {propriedade.nome} já tem dono.")
-                    else:
-                        print(f"[DEBUG] Posição 1 não é uma propriedade comprável.")
+                # B. Clique no Botão "Fazer uma proposta"
+                elif btn_proposta_rect.collidepoint(event.pos):
+                    print("[AÇÃO] Fazer uma proposta (Funcionalidade a ser implementada)...")
+                    # (Lógica futura aqui)
 
-
-                # D. Clique no Tabuleiro (Lógica simplificada, sem sobreposição)
+                # C. Clique no Tabuleiro
                 elif BOARD_AREA_RECT.collidepoint(event.pos):
+                    # Converte coordenada global (tela) para local (tabuleiro)
                     local_px = event.pos[0] - BOARD_AREA_RECT.x
                     local_py = event.pos[1] - BOARD_AREA_RECT.y
                     pos = find_position_at(local_px, local_py)
@@ -332,41 +336,58 @@ def main():
                         nome = getattr(casa, "nome", None) if casa is not None else None
                         print(f"[CLICK TABULEIRO] posição={pos}  nome={nome}")
                         
+                        # Dispara callbacks (se houver)
                         for cb in list(_ON_CLICK):
                             cb(pos, casa, board)
                         pygame.event.post(pygame.event.Event(SQUARE_CLICKED, {"pos": pos, "casa": casa, "board": board}))
 
 
-        # --- 2. Lógica de Desenho (MODIFICADA) ---
+        # --- 2. Lógica de Desenho ---
         
         screen.fill(COLOR_BG)
 
         # 1. Desenha o Tabuleiro (Fundo)
         screen.blit(bg, board_blit_pos)
         
-        # 2. Desenha os Dados
-        d1_img = dice_images[jogo.ultimo_d1 - 1]
+        # 2. Desenha os Painéis Laterais
+        draw_player_panels(screen, jogo.jogadores, jogo.banco, fonts)
+
+        # 3. Desenha o Painel Central (sobre o tabuleiro)
+        pygame.draw.rect(screen, COLOR_CENTRAL_PANEL_BG, CENTRAL_PANEL_RECT, border_radius=10)
+
+        # 4. Texto "Vez de:"
+        jogador_atual = jogo.jogadores[jogo.indice_turno_atual]
+        vez_de_txt = fonts["normal"].render("Vez de:", True, COLOR_TEXT_TITLE)
+        screen.blit(vez_de_txt, (CENTRAL_PANEL_RECT.x + 15, CENTRAL_PANEL_RECT.y + 15))
+        
+        jogador_nome_txt = fonts["props"].render(jogador_atual.nome, True, COLOR_TEXT_TITLE)
+        screen.blit(jogador_nome_txt, (CENTRAL_PANEL_RECT.x + 15, CENTRAL_PANEL_RECT.y + 35)) # Abaixo de "Vez de:"
+
+        # 4b. Fundo da Área dos Dados
+        dice_bg_rect_x = CENTRAL_PANEL_RECT.x + CENTRAL_PANEL_RECT.width - 200 - 10 # 200 largura dados, 10 margem
+        dice_bg_rect_y = CENTRAL_PANEL_RECT.y + 10
+        dice_bg_rect_width = 200 
+        dice_bg_rect_height = CENTRAL_PANEL_RECT.height - 20 
+
+        pygame.draw.rect(screen, COLOR_DICE_BG, 
+                         (dice_bg_rect_x, dice_bg_rect_y, dice_bg_rect_width, dice_bg_rect_height), 
+                         border_radius=5)
+        
+        # 5. Imagens dos Dados
+        d1_img = dice_images[jogo.ultimo_d1 - 1] # -1 pois a lista é 0-indexada
         d2_img = dice_images[jogo.ultimo_d2 - 1]
         screen.blit(d1_img, DICE_POS_1)
         screen.blit(d2_img, DICE_POS_2)
         
-        # 3. Desenha os Painéis (Opaques, nas laterais)
-        draw_player_panels(screen, jogo.jogadores, jogo.banco, fonts)
-
-        # 4. Desenha os Botões
-        pygame.draw.rect(screen, COLOR_BUTTON, btn_turno_rect, border_radius=5)
-        btn_txt = fonts["titulo"].render("Próximo Turno", True, COLOR_TEXT_TITLE)
-        txt_rect = btn_txt.get_rect(center=btn_turno_rect.center)
+        # 6. Desenha os Botões
+        pygame.draw.rect(screen, COLOR_BUTTON_PROPOSTA, btn_proposta_rect, border_radius=5)
+        btn_txt = fonts["status"].render("Fazer uma proposta", True, COLOR_TEXT_TITLE)
+        txt_rect = btn_txt.get_rect(center=btn_proposta_rect.center)
         screen.blit(btn_txt, txt_rect)
         
-        pygame.draw.rect(screen, COLOR_BUTTON_DEBUG, btn_prisao_rect, border_radius=5)
-        btn_txt = fonts["debug"].render("Debug: Ir para Prisão", True, COLOR_TEXT_TITLE)
-        txt_rect = btn_txt.get_rect(center=btn_prisao_rect.center)
-        screen.blit(btn_txt, txt_rect)
-        
-        pygame.draw.rect(screen, COLOR_BUTTON_DEBUG, btn_comprar_rect, border_radius=5)
-        btn_txt = fonts["debug"].render("Debug: Comprar Propriedade", True, COLOR_TEXT_TITLE)
-        txt_rect = btn_txt.get_rect(center=btn_comprar_rect.center)
+        pygame.draw.rect(screen, COLOR_BUTTON_LANCAR, btn_lancar_dados_rect, border_radius=5)
+        btn_txt = fonts["status"].render("Lançar Dados", True, COLOR_TEXT_TITLE)
+        txt_rect = btn_txt.get_rect(center=btn_lancar_dados_rect.center)
         screen.blit(btn_txt, txt_rect)
 
         # Atualiza a tela
