@@ -36,15 +36,15 @@ except ImportError as e:
 except Exception:
     backend = None
 
-# ========= Configuração da janela / layout (MODIFICADO) =========
-WINDOW_WIDTH = 1500      # Largura da janela
-WINDOW_HEIGHT = 1000     # Altura da janela
+# ========= Configuração da janela / layout =========
+WINDOW_WIDTH = 1500     # Largura da janela
+WINDOW_HEIGHT = 900     # Altura da janela
 PANEL_WIDTH = 300
 BOARD_SIZE = 900
 
 # Definição das áreas principais (LADO A LADO)
 LEFT_PANEL_RECT = pygame.Rect(0, 0, PANEL_WIDTH, WINDOW_HEIGHT)
-BOARD_RECT = pygame.Rect(PANEL_WIDTH, 0, BOARD_SIZE, WINDOW_HEIGHT) 
+BOARD_RECT = pygame.Rect(PANEL_WIDTH, 0, BOARD_SIZE, BOARD_SIZE) 
 RIGHT_PANEL_RECT = pygame.Rect(PANEL_WIDTH + BOARD_SIZE, 0, PANEL_WIDTH, WINDOW_HEIGHT)
 
 # ========= Cores e Fontes =========
@@ -61,9 +61,9 @@ COLOR_DICE_BG = (120, 120, 120)       # Fundo dos dados
 
 # --- Geometria do Tabuleiro (para cliques) ---
 BOARD_MARGIN = 30        
-SQUARE_W = 80            
-SQUARE_H = 120           
-CORNER = 120             
+SQUARE_W = 71            
+SQUARE_H = 100           
+CORNER = 100             
 
 IMG_NAME = "monopoly_board_preview.png"
 
@@ -72,6 +72,17 @@ DICE_SIZE = 60  # Tamanho de cada imagem de dado
 DICE_GAP = 30   # Espaço entre os dados
 CENTRAL_PANEL_WIDTH = 400
 CENTRAL_PANEL_HEIGHT = 150
+
+# ========= Configuração dos Peões =========
+PEAO_SIZE = 25 
+PEAO_FILENAMES = ["peao1.png", "peao2.png", "peao3.png", "peao4.png"]
+# offsets para os peões não se sobreporem
+PEAO_OFFSETS = [
+    (-PEAO_SIZE // 2, -PEAO_SIZE // 2), # Canto Superior Esquerdo
+    ( PEAO_SIZE // 2, -PEAO_SIZE // 2), # Canto Superior Direito
+    (-PEAO_SIZE // 2,  PEAO_SIZE // 2), # Canto Inferior Esquerdo
+    ( PEAO_SIZE // 2,  PEAO_SIZE // 2), # Canto Inferior Direito
+]
 
 # ========= Callbacks =========
 _ON_CLICK: List[Callable[[int, Any, Any], None]] = []
@@ -82,38 +93,50 @@ def register_on_click(func: Callable[[int, Any, Any], None]) -> None:
 
 # ========= Geometria =========
 def pos_to_rect(pos: int) -> Tuple[int, int, int, int]:
-    """Converte a posição 0..39 para (x, y, w, h) LOCAL (0,0 é o canto do tabuleiro)."""
+    """Converte a posição 0..39 para (x, y, w, h) LOCAL (0,0 é o canto do tabuleiro).
+    --- ATENÇÃO: Esta lógica assume que a Posição 0 é o Canto Inferior Direito ---
+    Caminho: Inferior-Direito (0) -> Inferior-Esquerdo (10) -> 
+             Superior-Esquerdo (20) -> Superior-Direito (30) -> Inferior-Direito (39)
+    """
     left = BOARD_MARGIN
     top = BOARD_MARGIN
+    right = BOARD_SIZE - BOARD_MARGIN  # Coordenada X da parte da direita
+    bottom = BOARD_SIZE - BOARD_MARGIN # Coordenada Y da parte de baixo
 
+    # Lado Inferior (Pos 0 a 10) -  para a esquerda
     if 0 <= pos <= 10:
-        if pos in (0, 10): 
-            x, y = (left, top) if pos == 0 else (left + CORNER + 9 * SQUARE_W, top)
-            return (x, y, CORNER, CORNER)
-        x = left + CORNER + (pos - 1) * SQUARE_W
-        y = top
-        return (x, y, SQUARE_W, SQUARE_H)
+        if pos == 0: # Canto Inferior Direito Inicio)
+            return (right - CORNER, bottom - CORNER, CORNER, CORNER)
+        if pos == 10: # Canto Inferior Esquerdo (Prisão)
+            return (left, bottom - CORNER, CORNER, CORNER)
+        # Casas 1-9 (invertido, pois 1 está à esquerda do 0)
+        x = right - CORNER - (pos * SQUARE_W)
+        return (x, bottom - SQUARE_H, SQUARE_W, SQUARE_H)
 
-    if 11 <= pos <= 19:
-        x = left + CORNER + 9 * SQUARE_W
-        y = top + CORNER + (pos - 11) * SQUARE_W
-        return (x, y, SQUARE_H, SQUARE_W)
+    # Lado Esquerdo (Pos 11 a 20) - para cima
+    if 11 <= pos <= 20:
+        if pos == 20: # Canto Superior Esquerdo (Estacionamento)
+            return (left, top, CORNER, CORNER)
+        # Casas 11-19
+        y = bottom - CORNER - ((pos - 10) * SQUARE_W)
+        return (left, y, SQUARE_H, SQUARE_W)
 
-    if 20 <= pos <= 30:
-        if pos in (20, 30):
-            x, y = (
-                (left + CORNER + 9 * SQUARE_W, top + CORNER + 9 * SQUARE_W)
-                if pos == 20 else
-                (left, top + CORNER + 9 * SQUARE_W)
-            )
-            return (x, y, CORNER, CORNER)
-        x = left + CORNER + (30 - pos - 1) * SQUARE_W
-        y = top + CORNER + 9 * SQUARE_W
-        return (x, y, SQUARE_W, SQUARE_H)
+    # Lado Superior (Pos 21 a 30) - para a direita
+    if 21 <= pos <= 30:
+        if pos == 30: # Canto Superior Direito (Vá para Prisão)
+            return (right - CORNER, top, CORNER, CORNER)
+        # Casas 21-29
+        x = left + CORNER + ((pos - 21) * SQUARE_W)
+        return (x, top, SQUARE_W, SQUARE_H)
 
-    x = left
-    y = top + CORNER + (39 - pos) * SQUARE_W
-    return (x, y, SQUARE_H, SQUARE_W)
+    # Lado Direito (Pos 31 a 39) - para baixo
+    if 31 <= pos <= 39:
+        # Casas 31-39
+        y = top + CORNER + ((pos - 31) * SQUARE_W)
+        return (right - SQUARE_H, y, SQUARE_H, SQUARE_W)
+
+    # Fallback, não deve acontecer
+    return (0, 0, 10, 10)
 
 
 def find_position_at(px: int, py: int) -> Optional[int]:
@@ -193,6 +216,46 @@ def draw_player_panels(screen, jogadores, banco, fonts):
     draw_player_info(screen, j4, banco, RIGHT_PANEL_RECT.x + 10, WINDOW_HEIGHT // 2, info_width, fonts)
 
 
+# ========= Funções de Desenho do Peão =========
+
+def draw_peoes(screen, jogo_obj, peao_images, board_offset):
+    """
+    Desenha todos os peões no tabuleiro com base em suas posições.
+    """
+    board_x_offset, board_y_offset = board_offset
+    
+    for i, jogador in enumerate(jogo_obj.jogadores):
+        
+        # 1. Determinar a Posição Lógica (0-39)
+        # Se estiver na prisão, a posição visual é SEMPRE a da prisão (10)
+        posicao_logica = POSICAO_PRISAO if jogador.em_prisao else jogador.posicao
+
+        # 2. Obter a Imagem do Peão
+        peao_img = peao_images[i % len(peao_images)]
+
+        # 3. Converter Posição Lógica para Coordenadas
+        try:
+            # Pega o retângulo LOCAL (relativo ao tabuleiro)
+            local_rect = pos_to_rect(posicao_logica)
+            lx, ly, lw, lh = local_rect
+            
+            # Calcula o CENTRO da casa
+            centro_x_local = lx + lw // 2
+            centro_y_local = ly + lh // 2
+            
+            # 4. Aplicar Offset do Peão (para não sobrepor)
+            offset_x, offset_y = PEAO_OFFSETS[i % len(PEAO_OFFSETS)]
+            
+            # 5. Calcular Posição Final (Global)
+            draw_x = board_x_offset + centro_x_local + offset_x - (PEAO_SIZE // 2)
+            draw_y = board_y_offset + centro_y_local + offset_y - (PEAO_SIZE // 2)
+            
+            # 6. Desenhar o peão na tela
+            screen.blit(peao_img, (draw_x, draw_y))
+            
+        except Exception as e:
+            print(f"Erro ao desenhar peão para {jogador.nome} na pos {posicao_logica}: {e}")
+
 # ========= UI principal =========
 def main():
     pygame.init()
@@ -228,6 +291,24 @@ def main():
         print(f"Erro ao carregar imagens dos dados (ex: 'dado1.png'): {e}")
         pygame.quit()
         sys.exit(1)
+        
+    # --- Carregar Imagens dos Peões ---
+    peao_images = []
+    try:
+        print(f"Carregando peões de: {os.path.abspath(BASE_DIR)}")
+        for i, filename in enumerate(PEAO_FILENAMES):
+            path = os.path.join(BASE_DIR, filename)
+            if not os.path.exists(path):
+                raise FileNotFoundError(f"Arquivo do peão não encontrado: {filename}")
+                
+            img = pygame.image.load(path).convert_alpha()
+            img = pygame.transform.smoothscale(img, (PEAO_SIZE, PEAO_SIZE))
+            peao_images.append(img)
+            
+    except Exception as e:
+        print(f"Erro ao carregar imagens dos peões (ex: 'peao1.png'): {e}")
+        pygame.quit()
+        sys.exit(1)
 
     # Carregar Tabuleiro
     img_path = os.path.join(BASE_DIR, IMG_NAME)
@@ -242,7 +323,7 @@ def main():
 
     
     # --- 4. Calcular Posições e Áreas ---
-    # Posição do Tabuleiro (centralizado, entre os painéis)
+    # Posição do Tabuleiro
     board_blit_x = PANEL_WIDTH  # Começa depois do painel esquerdo
     board_blit_y = 0
     board_blit_pos = (board_blit_x, board_blit_y)
@@ -346,16 +427,19 @@ def main():
         
         screen.fill(COLOR_BG)
 
-        # 1. Desenha o Tabuleiro (Fundo)
+        # Desenha o Tabuleiro (Fundo)
         screen.blit(bg, board_blit_pos)
         
-        # 2. Desenha os Painéis Laterais
+        # Desenha os Peões
+        draw_peoes(screen, jogo, peao_images, board_blit_pos)
+        
+        # Desenha os Painéis Laterais
         draw_player_panels(screen, jogo.jogadores, jogo.banco, fonts)
 
-        # 3. Desenha o Painel Central (sobre o tabuleiro)
+        # Desenha o Painel Central (sobre o tabuleiro)
         pygame.draw.rect(screen, COLOR_CENTRAL_PANEL_BG, CENTRAL_PANEL_RECT, border_radius=10)
 
-        # 4. Texto "Vez de:"
+        # Texto "Vez de:"
         jogador_atual = jogo.jogadores[jogo.indice_turno_atual]
         vez_de_txt = fonts["normal"].render("Vez de:", True, COLOR_TEXT_TITLE)
         screen.blit(vez_de_txt, (CENTRAL_PANEL_RECT.x + 15, CENTRAL_PANEL_RECT.y + 15))
@@ -363,7 +447,7 @@ def main():
         jogador_nome_txt = fonts["props"].render(jogador_atual.nome, True, COLOR_TEXT_TITLE)
         screen.blit(jogador_nome_txt, (CENTRAL_PANEL_RECT.x + 15, CENTRAL_PANEL_RECT.y + 35)) # Abaixo de "Vez de:"
 
-        # 4b. Fundo da Área dos Dados
+        # Fundo da Área dos Dados
         dice_bg_rect_x = CENTRAL_PANEL_RECT.x + CENTRAL_PANEL_RECT.width - 200 - 10
         dice_bg_rect_y = CENTRAL_PANEL_RECT.y + 10
         dice_bg_rect_width = 200 
@@ -373,13 +457,13 @@ def main():
                          (dice_bg_rect_x, dice_bg_rect_y, dice_bg_rect_width, dice_bg_rect_height), 
                          border_radius=5)
         
-        # 5. Imagens dos Dados
+        # Imagens dos Dados
         d1_img = dice_images[jogo.ultimo_d1 - 1]
         d2_img = dice_images[jogo.ultimo_d2 - 1]
         screen.blit(d1_img, DICE_POS_1)
         screen.blit(d2_img, DICE_POS_2)
         
-        # 6. Desenha os Botões
+        # Desenha os Botões
         pygame.draw.rect(screen, COLOR_BUTTON_PROPOSTA, btn_proposta_rect, border_radius=5)
         btn_txt = fonts["status"].render("Fazer uma proposta", True, COLOR_TEXT_TITLE)
         txt_rect = btn_txt.get_rect(center=btn_proposta_rect.center)
