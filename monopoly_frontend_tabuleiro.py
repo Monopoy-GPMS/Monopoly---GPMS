@@ -266,7 +266,7 @@ def main():
 
     # Posição dos Dados (relativo ao Painel Central)
     total_dice_display_width = (DICE_SIZE * 2) + DICE_GAP
-    dice_area_x = CENTRAL_PANEL_RECT.x + CENTRAL_PANEL_RECT.width - total_dice_display_width - 15 # margem direita
+    dice_area_x = CENTRAL_PANEL_RECT.x + CENTRAL_PANEL_RECT.width - total_dice_display_width - 35 # margem direita da imagem dos dados
 
     DICE_POS_1 = (
         dice_area_x,
@@ -342,7 +342,7 @@ def main():
                         pygame.event.post(pygame.event.Event(SQUARE_CLICKED, {"pos": pos, "casa": casa, "board": board}))
 
 
-        # --- 2. Lógica de Desenho ---
+        # --- Lógica de Desenho ---
         
         screen.fill(COLOR_BG)
 
@@ -364,7 +364,7 @@ def main():
         screen.blit(jogador_nome_txt, (CENTRAL_PANEL_RECT.x + 15, CENTRAL_PANEL_RECT.y + 35)) # Abaixo de "Vez de:"
 
         # 4b. Fundo da Área dos Dados
-        dice_bg_rect_x = CENTRAL_PANEL_RECT.x + CENTRAL_PANEL_RECT.width - 200 - 10 # 200 largura dados, 10 margem
+        dice_bg_rect_x = CENTRAL_PANEL_RECT.x + CENTRAL_PANEL_RECT.width - 200 - 10
         dice_bg_rect_y = CENTRAL_PANEL_RECT.y + 10
         dice_bg_rect_width = 200 
         dice_bg_rect_height = CENTRAL_PANEL_RECT.height - 20 
@@ -374,7 +374,7 @@ def main():
                          border_radius=5)
         
         # 5. Imagens dos Dados
-        d1_img = dice_images[jogo.ultimo_d1 - 1] # -1 pois a lista é 0-indexada
+        d1_img = dice_images[jogo.ultimo_d1 - 1]
         d2_img = dice_images[jogo.ultimo_d2 - 1]
         screen.blit(d1_img, DICE_POS_1)
         screen.blit(d2_img, DICE_POS_2)
