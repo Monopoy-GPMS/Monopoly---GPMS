@@ -1,7 +1,7 @@
 # src/main.py
 # Ponto de entrada do sistema
 
-from jogo import Jogo 
+from src.jogo import Jogo 
 
 if __name__ == '__main__':
     print("--- DEMONSTRAÇÃO DA VERSÃO PARCIAL: BACKEND ---")

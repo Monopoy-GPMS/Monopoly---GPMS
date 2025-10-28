@@ -4,10 +4,10 @@
 import random
 
 # Importação CORRIGIDA para a nova estrutura de módulos (imports relativos dentro de src/)
-from jogador import Jogador 
-from banco import Banco
-from tabuleiro import Tabuleiro 
-from constantes import VALOR_PASSAGEM_SAIDA # Usamos a constante do novo arquivo!
+from src.jogador import Jogador 
+from src.banco import Banco
+from src.tabuleiro import Tabuleiro 
+from src.constantes import VALOR_PASSAGEM_SAIDA # Usamos a constante do novo arquivo!
 
 class Jogo:
     # A constante VALOR_PASSAGEM_SAIDA foi removida daqui e está em constantes.py
