@@ -93,27 +93,27 @@ Monopoly---GPMS-rd-/
 ## 🎨 Detalhes das 40 Casas
 
 ### Lado Superior (0-10):
-0. **GRÁTIS** (canto)
+0. **ESTACIONAMENTO GRÁTIS** (canto)
 1. IPANEMA - $220m (vermelho)
 2. SORTE
 3. LEBLON - $220m (vermelho)
 4. COPACABANA - $120m (vermelho)
 5. ESTAÇÃO DE METRÔ CONSOLAÇÃO - $200m
-6. AVENIDA COPACABANA - $240m (verde claro)
-7. PACAEMBU - $260m (verde claro)
+6. AVENIDA COPACABANA - $240m (amarelo)
+7. PACAEMBU - $260m (amarelo)
 8. COMPANHIA DE DISTRIBUIÇÃO DE ENERGIA - $150m
-9. IBIRAPUERA - $280m (verde escuro)
+9. IBIRAPUERA - $280m (amarelo)
 10. **VÁ PARA A CADEIA** (canto)
 
 ### Lado Direito (11-19):
-11. FÉRIAS NA TAILÂNDIA - $300m (verde escuro)
-12. COMPRAR DE CHEFE - $300m (verde escuro)
+11. BARRA DA TIJUCA - $300m (verde escuro)
+12. JARDIM BOTÂNICO - $300m (verde escuro)
 13. COFRE
-14. JOGO ARCADE TETRIS - $320m (verde escuro)
-15. ESTAÇÃO DE METRO RIO DE JANEIRO - $400m
+14. LAGOA RODRIGO DE FREITAS - $320m (verde escuro)
+15. ESTAÇÃO DE METRO REPÚBLICA - $200m
 16. SORTE
-17. FAQUEI A PROVA I - $350m (azul escuro)
-18. FAQUEI A PROVA II - $400m (azul escuro)
+17. AVENIDA MORUMBI - $350m (azul escuro)
+18. RUA OSCAR FREIRE - $400m (azul escuro)
 19. SORTE
 
 ### Lado Inferior (20-30):
@@ -123,22 +123,23 @@ Monopoly---GPMS-rd-/
 23. PRAÇA DA SÉ - $60m
 24. IMPOSTO DE RENDA - PAGUE $200m
 25. ESTAÇÃO MARACANÃ - $200m
-26. SORTE
-27. RUA 25 DE MARÇO - $100m (azul claro)
+26. RUA 25 DE MARÇO - $100m (azul claro)
+27. SORTE
 28. AVENIDA SÃO JOÃO - $100m (azul claro)
-29. AVENIDA PAULISTA - $120m (laranja)
+29. AVENIDA PAULISTA - $120m (azul claro)
 30. **NA CADEIA/VISITANTE** (canto)
 
 ### Lado Esquerdo (31-39):
-31. AVENIDA DO OUVIDOR - $140m (laranja)
-32. FLAMINGO - $140m (rosa)
-33. COFRE
-34. BOTAFOGO - $160m (magenta)
-35. SORTE
-36. AVENIDA ATLÂNTICA - $180m (magenta)
-37. ESTAÇÃO DE METRÔ - $200m
-38. AVENIDA VIEIRA SOUTO - $200m (laranja)
-39. SORTE
+31. AVENIDA VIEIRA SOUTO - $200m (rosa)
+32. COMPANHIA ELÉTRICA - $150m
+33. NITERÓI - $140m (rosa)
+34. AVENIDA ATLÂNTICA - $180m (rosa)
+35. ESTAÇÃO DE METRÔ CARIOCA - $200m
+36. AVENIDA PRESIDENTE JUSCELINO KUBITSCHEK - $180m (laranja)
+37. COFRE
+38. AVENIDA ENGENHEIRO LUÍS CARLOS BERRINI - $180m (laranja)
+39. AVENIDA BRIGADEIRO FALIA LIMA - $200m (laranja)
+
 
 ## 🔧 Funcionalidades Implementadas
 
