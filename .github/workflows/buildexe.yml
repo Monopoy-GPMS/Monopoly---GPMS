@@ -26,8 +26,15 @@ jobs:
         pip install pyinstaller -r requirements.txt
 
     - name: Criar Executável com PyInstaller (Windows)
-      run: run: |
-        pyinstaller --onefile --windowed --name "MonopolyPython" --add-data "assets;assets" main.py
+    shell: cmd
+    run: |
+      pyinstaller ^
+        --onefile ^
+        --windowed ^
+        --name "MonopolyPython" ^
+        --add-data "assets;assets" ^
+        main.py
+
 
     - name: Upload do Artefato (.exe)
       uses: actions/upload-artifact@v4
