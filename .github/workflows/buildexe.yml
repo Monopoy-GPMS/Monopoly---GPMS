@@ -9,7 +9,7 @@ on:
 
 jobs:
   build_exe:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - name: Checkout do Repositório
@@ -18,20 +18,20 @@ jobs:
     - name: Configurar Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11' 
+        python-version: '3.11'
 
     - name: Instalar Dependências e PyInstaller
       run: |
         python -m pip install --upgrade pip
-        pip install pyinstaller -r requirements.txt 
+        pip install pyinstaller -r requirements.txt
 
-    - name: Criar Executável com PyInstaller
+    - name: Criar Executável com PyInstaller (Windows)
       run: |
-        pyinstaller \
-          --onefile \
-          --windowed \
-          --name "MonopolyPython" \
-          --add-data "assets:assets" \
+        pyinstaller ^
+          --onefile ^
+          --windowed ^
+          --name "MonopolyPython" ^
+          --add-data "assets;assets" ^
           main.py
 
     - name: Upload do Artefato (.exe)
