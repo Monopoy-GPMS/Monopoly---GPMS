@@ -4,36 +4,38 @@ on:
   push:
     branches:
       - main
-      - feature/setup-actions
+      - feature/**
   workflow_dispatch:
 
 jobs:
   build_exe:
-    # Continuamos usando Ubuntu, mas a Action executa o build para Windows.
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest
 
     steps:
-    - name: 1. Checkout do Repositório
+    - name: Checkout do Repositório
       uses: actions/checkout@v4
 
-    - name: 2. Build do Executável Windows (Cross-compilation)
-      uses: cdrx/pyinstaller-windows-exe@v2
+    - name: Configurar Python
+      uses: actions/setup-python@v5
       with:
-        # Caminho para o seu arquivo principal
-        path: main.py 
-        # Comando PyInstaller (o "pyinstaller" inicial é omitido)
-        spec: >
-          --onefile 
-          --windowed 
-          --name "MonopolyPython" 
-          --add-data "assets;assets" 
-          main.py
-        # Instala as dependências a partir do seu arquivo
-        requirements: requirements.txt
+        python-version: '3.11' 
 
-    - name: 3. Upload do Artefato (.exe)
+    - name: Instalar Dependências e PyInstaller
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller -r requirements.txt 
+
+    - name: Criar Executável com PyInstaller
+      run: |
+        pyinstaller \
+          --onefile \
+          --windowed \
+          --name "MonopolyPython" \
+          --add-data "assets:assets" \
+          main.py
+
+    - name: Upload do Artefato (.exe)
       uses: actions/upload-artifact@v4
       with:
         name: monopoly-exe-${{ github.sha }}
-        # O arquivo de saída desta Action é sempre dist/MonopolyPython.exe
         path: dist/MonopolyPython.exe
