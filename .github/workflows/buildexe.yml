@@ -1,35 +1,32 @@
-name: Build Executavel 
+name: Build Executavel Windows (Monopoly)
 
 on:
   push:
-    branches: [ main ] 
-  
+    branches:
+      - main
+      - feature/setup-actions
   workflow_dispatch:
 
 jobs:
   build_exe:
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest
 
     steps:
-    - name: 1. Checkout do Repositório
+    - name: Checkout do Repositório
       uses: actions/checkout@v4
 
-    - name: 2. Configurar Python
+    - name: Configurar Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.14' 
+        python-version: '3.11' 
 
-    - name: 3. Instalar Dependências e PyInstaller
+    - name: Instalar Dependências e PyInstaller
       run: |
         python -m pip install --upgrade pip
-        # Instala PyInstaller e todas as libs do jogo (como Pygame, se for o caso)
         pip install pyinstaller -r requirements.txt 
 
-    - name: 4. Criar Executável com PyInstaller
+    - name: Criar Executável com PyInstaller
       run: |
-        # O PyInstaller precisa que os arquivos de assets sejam adicionados explicitamente.
-        # Sintaxe para Linux: --add-data "SOURCE:DEST" (Ex: assets:assets)
-        # O --windowed é crucial para jogos (GUI) para não abrir a janela do console.
         pyinstaller \
           --onefile \
           --windowed \
@@ -37,7 +34,7 @@ jobs:
           --add-data "assets:assets" \
           main.py
 
-    - name: 5. Upload do Artefato (o .exe)
+    - name: Upload do Artefato (.exe)
       uses: actions/upload-artifact@v4
       with:
         name: monopoly-exe-${{ github.sha }}
