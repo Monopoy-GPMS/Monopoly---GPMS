@@ -4,6 +4,7 @@
 import pygame
 import sys
 import math
+import random
 
 class CampoTexto:
     """Classe para campo de entrada de texto com design melhorado"""
@@ -156,8 +157,8 @@ class MenuInicial:
         
         # Botões de seleção de jogadores (2 a 6 jogadores)
         self.botoes_num_jogadores = []
-        for i in range(2, 7):  # 2, 3, 4, 5, 6 jogadores
-            x = self.largura // 2 - 275 + (i - 2) * 110
+        for i in range(1, 7):  # 1, 2, 3, 4, 5, 6 jogadores
+            x = self.largura // 2 - 330 + (i - 1) * 110
             y = 240
             botao = BotaoCircular(x, y, 45, str(i))
             self.botoes_num_jogadores.append(botao)
@@ -260,6 +261,9 @@ class MenuInicial:
     
     def handle_events(self, event):
         """Processa eventos do menu"""
+        if event is None:
+            return None
+            
         # Eventos dos campos de texto
         for campo in self.campos_texto:
             campo.handle_event(event)
@@ -267,7 +271,7 @@ class MenuInicial:
         # Eventos dos botões de número de jogadores
         for i, botao in enumerate(self.botoes_num_jogadores):
             if botao.handle_event(event):
-                self.num_jogadores = i + 2
+                self.num_jogadores = i + 1
                 self.criar_campos_texto()
         
         # Evento do botão iniciar
@@ -328,7 +332,7 @@ class MenuInicial:
         
         # Botões de número de jogadores
         for i, botao in enumerate(self.botoes_num_jogadores):
-            botao.selecionado = (i + 2 == self.num_jogadores)
+            botao.selecionado = (i + 1 == self.num_jogadores)
             botao.draw(self.screen)
         
         # Texto - Digite os nomes
@@ -677,7 +681,3 @@ class TelaFimDeJogo:
             (150, 200, 255)
         )
         self.screen.blit(texto_props, (x_base + 50, y_base + 50))
-
-
-# Importação do random para as partículas
-import random
