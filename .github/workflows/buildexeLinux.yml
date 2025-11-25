@@ -1,0 +1,45 @@
+name: Build Executavel Linux (Monopoly)
+
+on:
+  push:
+    branches:
+      - main
+      - feature/setup-actions
+  workflow_dispatch:
+
+jobs:
+  build_exe_linux:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout do Repositório
+      uses: actions/checkout@v4
+
+    - name: Configurar Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Instalar Dependências e PyInstaller
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller -r requirements.txt
+        pip install backports.tarfile
+
+    - name: Criar Executável com PyInstaller (Linux)
+      run: |
+        pyinstaller \
+          --onefile \
+          --windowed \
+          --name "MonopolyPython" \
+          --add-data "assets:assets" \
+          main.py
+
+    - name: Permissões de Execução
+      run: chmod +x dist/MonopolyPython
+
+    - name: Upload do Artefato (Linux bin)
+      uses: actions/upload-artifact@v4
+      with:
+        name: monopoly-linux-${{ github.sha }}
+        path: dist/MonopolyPython
