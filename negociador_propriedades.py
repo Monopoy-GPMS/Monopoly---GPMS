@@ -1,4 +1,3 @@
-# negociador_propriedades.py
 # Sistema avançado para negociação de propriedades entre jogadores
 
 from enum import Enum
@@ -63,10 +62,18 @@ class NegociadorPropriedades:
             print(f"  > Erro: {proponente.nome} já possui {propriedade.nome}")
             return None
         
+        if hasattr(propriedade, 'hipotecada') and propriedade.hipotecada:
+            print(f"  > Erro: {propriedade.nome} está hipotecada e não pode ser negociada")
+            return None
+        
         saldo_proponente = self.banco.consultar_saldo(proponente.nome)
         if saldo_proponente < valor_ofertado:
             print(f"  > Erro: {proponente.nome} não tem R${valor_ofertado}")
             return None
+        
+        # Additional check: if property is part of a monopoly with buildings, special consideration
+        if hasattr(propriedade, 'casas') and propriedade.casas > 0:
+            print(f"  > Aviso: {propriedade.nome} possui construções que serão perdidas na venda")
         
         # Cria proposta
         negociacao = NegociacaoProposta(proponente, receptor, propriedade, valor_ofertado)
@@ -87,7 +94,11 @@ class NegociadorPropriedades:
         valor = negociacao.valor_ofertado
         
         # Transfere dinheiro
-        self.banco.pagar(proponente.nome, valor, receptor.nome)
+        sucesso_pagamento = self.banco.pagar(proponente.nome, valor, receptor.nome)
+        
+        if not sucesso_pagamento:
+            print(f"  > Erro: Falha na transferência de dinheiro")
+            return False
         
         # Transfere propriedade
         receptor.remover_propriedade(propriedade)
@@ -112,6 +123,104 @@ class NegociadorPropriedades:
         self.negociacoes_ativas.remove(negociacao)
         
         print(f"  > [NEGOCIAÇÃO RECUSADA] {negociacao.receptor.nome} recusou a oferta de {negociacao.proponente.nome}")
+        
+        return True
+    
+    def cancelar_negociacao(self, negociacao):
+        """Cancela uma negociação pendente"""
+        if negociacao not in self.negociacoes_ativas:
+            return False
+        
+        negociacao.status = StatusNegociacaoEnum.CANCELADA
+        self.historico_negociacoes.append(negociacao)
+        self.negociacoes_ativas.remove(negociacao)
+        
+        print(f"  > [NEGOCIAÇÃO CANCELADA]")
+        
+        return True
+    
+    def propor_troca_propriedades(self, proponente, receptor, propriedade_oferecida, propriedade_desejada, valor_adicional=0):
+        """
+        Propõe uma troca de propriedades entre dois jogadores (com ou sem dinheiro adicional).
+        
+        Args:
+            proponente: Jogador que inicia a negociação
+            receptor: Outro jogador
+            propriedade_oferecida: Propriedade que proponente quer dar
+            propriedade_desejada: Propriedade que proponente quer receber
+            valor_adicional: Dinheiro adicional que proponente quer adicionar
+            
+        Returns:
+            NegociacaoProposta ou None se inválida
+        """
+        # Validações de ambas as propriedades
+        if propriedade_oferecida not in proponente.propriedades:
+            print(f"  > Erro: {proponente.nome} não possui {propriedade_oferecida.nome}")
+            return None
+        
+        if propriedade_desejada not in receptor.propriedades:
+            print(f"  > Erro: {receptor.nome} não possui {propriedade_desejada.nome}")
+            return None
+        
+        # Validações de hipoteca
+        if hasattr(propriedade_oferecida, 'hipotecada') and propriedade_oferecida.hipotecada:
+            print(f"  > Erro: {propriedade_oferecida.nome} está hipotecada")
+            return None
+        
+        if hasattr(propriedade_desejada, 'hipotecada') and propriedade_desejada.hipotecada:
+            print(f"  > Erro: {propriedade_desejada.nome} está hipotecada")
+            return None
+        
+        saldo_proponente = self.banco.consultar_saldo(proponente.nome)
+        if valor_adicional > 0 and saldo_proponente < valor_adicional:
+            print(f"  > Erro: {proponente.nome} não tem R${valor_adicional} para adicionar")
+            return None
+        
+        # Cria proposta de troca
+        negociacao = NegociacaoProposta(proponente, receptor, propriedade_desejada, valor_adicional)
+        negociacao.propriedade_oferecida = propriedade_oferecida
+        negociacao.é_troca = True
+        self.negociacoes_ativas.append(negociacao)
+        
+        print(f"  > [TROCA] {proponente.nome} ofereceu {propriedade_oferecida.nome} + R${valor_adicional} por {propriedade_desejada.nome}")
+        
+        return negociacao
+    
+    def aceitar_troca(self, negociacao):
+        """Aceita uma troca de propriedades"""
+        if negociacao not in self.negociacoes_ativas or not hasattr(negociacao, 'é_troca'):
+            return False
+        
+        proponente = negociacao.proponente
+        receptor = negociacao.receptor
+        prop_oferecida = negociacao.propriedade_oferecida
+        prop_desejada = negociacao.propriedade
+        valor_adicional = negociacao.valor_ofertado
+        
+        # Transfere dinheiro se houver
+        if valor_adicional > 0:
+            sucesso = self.banco.pagar(proponente.nome, valor_adicional, receptor.nome)
+            if not sucesso:
+                print(f"  > Erro: Falha na transferência de dinheiro")
+                return False
+        
+        # Transfere propriedades
+        proponente.remover_propriedade(prop_oferecida)
+        proponente.adicionar_propriedade(prop_desejada)
+        prop_desejada.proprietario = proponente
+        
+        receptor.remover_propriedade(prop_desejada)
+        receptor.adicionar_propriedade(prop_oferecida)
+        prop_oferecida.proprietario = receptor
+        
+        negociacao.status = StatusNegociacaoEnum.ACEITA
+        self.historico_negociacoes.append(negociacao)
+        self.negociacoes_ativas.remove(negociacao)
+        
+        msg = f"  > [TROCA ACEITA] {proponente.nome} trocou {prop_oferecida.nome} por {prop_desejada.nome}"
+        if valor_adicional > 0:
+            msg += f" (+ R${valor_adicional})"
+        print(msg)
         
         return True
     

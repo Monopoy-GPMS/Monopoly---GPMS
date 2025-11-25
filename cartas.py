@@ -183,11 +183,11 @@ class BaralhoCartas:
             self.cartas = [
                 CartaMovimento("Avance para a Casa de Partida (Receba R$200)", POSICAO_SAIDA, 'SORTE', cobra_passagem=False),
                 CartaMovimento("Avance para o Estacionamento (Parada livre)", 20, 'SORTE'),
-                CartaMovimento("Avance para a Avenida Morumbi", 39, 'SORTE'),
+                CartaMovimento("Avance para a Avenida Morumbi", 38, 'SORTE'),  # Corrigida posição da Avenida Morumbi de 39 para 38
                 CartaMovimento("Avance para a Estação de Metrô mais próxima. Pague se necessário, ou permita a compra se possível.", 5, 'SORTE'),
                 CartaMovimento("Avance para a Companhia de Água. Pague se necessário, ou permita a compra se possível.", 12, 'SORTE'),
                 CartaMovimento("Avance para a Avenida Atlântica. Se passar pelo Ponto de Partida, receba R$200", 37, 'SORTE'),
-                CartaMovimento("Avance para a Rua Oscar Freire", 39, 'SORTE'),
+                CartaMovimento("Avance para a Rua Oscar Freire", 39, 'SORTE'),  # Posição da Rua Oscar Freire mantida corretamente em 39
                 CartaMovimentoRelativo("Volte 3 casas", -3, 'SORTE'),
                 CartaPrisao('SORTE'),
                 CartaLivrePrisao('SORTE'),
