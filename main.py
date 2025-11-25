@@ -195,12 +195,12 @@ for i in range(1, 7):
 
 # --- Player info display positions (right side) ---
 POSICOES_TEXTO_JOGADOR = [
-    (LARGURA_TELA - 240, 20),   # Moved up from 120
-    (LARGURA_TELA - 240, 100),  # Moved up from 220
-    (LARGURA_TELA - 240, 180),  # Moved up from 320
-    (LARGURA_TELA - 240, 260),  # Moved up from 420
-    (LARGURA_TELA - 240, 340),  # Moved up from 520
-    (LARGURA_TELA - 240, 420)   # Moved up from 620
+    (LARGURA_TELA - 240, 20),    # Player 1
+    (LARGURA_TELA - 240, 140),   # Player 2 (increased from 100)
+    (LARGURA_TELA - 240, 260),   # Player 3 (increased from 180)
+    (LARGURA_TELA - 240, 380),   # Player 4 (increased from 260)
+    (LARGURA_TELA - 240, 500),   # Player 5 (increased from 340)
+    (LARGURA_TELA - 240, 620)    # Player 6 (increased from 420)
 ]
 
 BOARD_CENTER_X = BOARD_IMG_WIDTH // 2
@@ -695,7 +695,7 @@ def desenhar_popup_carta():
     pygame.draw.rect(screen, (100, 200, 255), (popup_x, popup_y, popup_width, popup_height), 3)
     
     # Título
-    titulo = FONTE_GRANDE.render("INTERAÇÃO EM ANDAMENTO", True, (255, 200, 50))
+    titulo = FONTE_GRANDE.render("INTERAÇÃO EM ANDAMENTO!", True, (255, 200, 50))
     titulo_rect = titulo.get_rect()
     titulo_rect.center = (LARGURA_TELA // 2, popup_y + 25)
     screen.blit(titulo, titulo_rect)
@@ -1027,8 +1027,36 @@ while running:
             
             # Mostrar propriedades abaixo do nome e saldo
             if jogador.propriedades:
-                props_text = FONTE_PEQUENA.render(f"Props: {len(jogador.propriedades)}", True, (200, 200, 255))
-                screen.blit(props_text, (pos_texto_x, pos_texto_y + 40))
+                y_offset = pos_texto_y + 40
+                max_chars_por_linha = 25
+                linhas_props = []
+                linha_atual = ""
+                
+                for nome_prop in [prop.nome for prop in jogador.propriedades]:
+                    if len(linha_atual) + len(nome_prop) + 2 > max_chars_por_linha:
+                        if linha_atual:
+                            linhas_props.append(linha_atual)
+                        linha_atual = nome_prop
+                    else:
+                        if linha_atual:
+                            linha_atual += ", " + nome_prop
+                        else:
+                            linha_atual = nome_prop
+                
+                if linha_atual:
+                    linhas_props.append(linha_atual)
+                
+                # Renderizar cada linha das propriedades com altura máxima
+                max_linhas_visíveis = 4  # Limit to 4 lines of properties
+                for idx, linha in enumerate(linhas_props[:max_linhas_visíveis]):
+                    props_text = FONTE_PEQUENA.render(linha, True, (200, 200, 255))
+                    screen.blit(props_text, (pos_texto_x, y_offset + (idx * 12)))
+                
+                # If more properties than space, show ellipsis
+                if len(linhas_props) > max_linhas_visíveis:
+                    ellipsis = FONTE_PEQUENA.render("...", True, (200, 200, 255))
+                    screen.blit(ellipsis, (pos_texto_x, y_offset + (max_linhas_visíveis * 12)))
+            # </CHANGE>
         
         if dados_lancados and dado1_valor > 0 and dado2_valor > 0:
             # Draw white background for dice

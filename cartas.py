@@ -163,30 +163,6 @@ class CartaComunidade(Carta):
         
         return True
 
-class CartaEventoAleatorio(Carta):
-    """Carta que sorteia um número de 1 a 10: par = recebe R$100, ímpar = paga R$100"""
-    
-    def __init__(self, tipo_carta='SORTE'):
-        descricao = "Sorteio Aleatório: Se número par, receba R$100. Se ímpar, pague R$100"
-        super().__init__(descricao, tipo_carta)
-    
-    def executar(self, jogador, banco, tabuleiro, jogo=None):
-        numero_sorteado = random.randint(1, 10)
-        eh_par = numero_sorteado % 2 == 0
-        valor = 100
-        
-        if eh_par:
-            banco.depositar(jogador.nome, valor)
-            print(f"  > {jogador.nome} sorteou {numero_sorteado} (PAR) e recebeu R${valor}!")
-        else:
-            sucesso = banco.pagar(jogador.nome, valor, "Banco")
-            if sucesso:
-                print(f"  > {jogador.nome} sorteou {numero_sorteado} (ÍMPAR) e pagou R${valor}!")
-            else:
-                print(f"  > {jogador.nome} não tem dinheiro suficiente para pagar R${valor}!")
-        
-        return True
-
 class BaralhoCartas:
     """Gerencia um baralho de cartas (Sorte ou Cofre) com 16 cartas cada"""
     
@@ -205,17 +181,17 @@ class BaralhoCartas:
         """Cria os 32 baralhos corretos (16 de Sorte + 16 de Cofre)"""
         if self.tipo == 'SORTE':
             self.cartas = [
-                CartaEventoAleatorio('SORTE'),
-                CartaEventoAleatorio('SORTE'),
                 CartaMovimento("Avance para a Casa de Partida (Receba R$200)", POSICAO_SAIDA, 'SORTE', cobra_passagem=False),
                 CartaMovimento("Avance para o Estacionamento (Parada livre)", 20, 'SORTE'),
                 CartaMovimento("Avance para a Avenida Morumbi", 39, 'SORTE'),
                 CartaMovimento("Avance para a Estação de Metrô mais próxima. Pague se necessário, ou permita a compra se possível.", 5, 'SORTE'),
                 CartaMovimento("Avance para a Companhia de Água. Pague se necessário, ou permita a compra se possível.", 12, 'SORTE'),
                 CartaMovimento("Avance para a Avenida Atlântica. Se passar pelo Ponto de Partida, receba R$200", 37, 'SORTE'),
+                CartaMovimento("Avance para a Rua Oscar Freire", 39, 'SORTE'),
                 CartaMovimentoRelativo("Volte 3 casas", -3, 'SORTE'),
                 CartaPrisao('SORTE'),
                 CartaLivrePrisao('SORTE'),
+                CartaDinheiro("Taxa de Reparo Geral: Pague R$15", -15, 'SORTE'),
                 CartaDinheiro("Multa por excesso de velocidade (Driving fine): Pague R$50", -50, 'SORTE'),
                 CartaReparos("Avaliação de Ruas. Pague R$25 por casa e R$100 por hotel que você possuir", 25, 100, 'SORTE'),
                 CartaDinheiro("Seu Empréstimo de Construção venceu. Receba R$150", 150, 'SORTE'),
@@ -224,8 +200,6 @@ class BaralhoCartas:
             ]
         else:  # COFRE
             self.cartas = [
-                CartaEventoAleatorio('COFRE'),
-                CartaEventoAleatorio('COFRE'),
                 CartaMovimento("Avance para a Casa de Partida (Receba R$200)", POSICAO_SAIDA, 'COFRE', cobra_passagem=False),
                 CartaLivrePrisao('COFRE'),
                 CartaPrisao('COFRE'),
@@ -235,13 +209,15 @@ class BaralhoCartas:
                 CartaDinheiro("Restituição do Imposto de Renda (Income Tax Refund). Receba R$20", 20, 'COFRE'),
                 CartaDinheiro("Fundo de Natal (Holiday Fund) é liberado. Receba R$100", 100, 'COFRE'),
                 CartaDinheiro("Seu seguro de vida venceu. Receba R$100", 100, 'COFRE'),
+                CartaComunidade("Taxa de Médico (Doctor's Fee). Receba R$50 de cada jogador", 50, è_recebimento=True, tipo_carta='COFRE'),
                 CartaDinheiro("Pague as taxas da Escola. Pague R$50", -50, 'COFRE'),
                 CartaDinheiro("Pague a conta do Hospital. Pague R$100", -100, 'COFRE'),
                 CartaDinheiro("Pague a Avaliação da sua Propriedade. Pague R$150", -150, 'COFRE'),
+                CartaDinheiro("Você foi eleito Presidente do Conselho. Pague R$100", -100, 'COFRE'),
                 CartaReparos("Avaliação de Ruas. Pague R$40 por casa e R$115 por hotel que você possuir", 40, 115, 'COFRE'),
                 CartaDinheiro("Você ganha um segundo prêmio em um concurso de beleza. Receba R$10", 10, 'COFRE'),
             ]
-
+    
     def embaralhar(self):
         """Embaralha o baralho"""
         random.shuffle(self.cartas)

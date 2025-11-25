@@ -1,7 +1,7 @@
 # src/tabuleiro.py
 
 # Importação dos novos módulos e classes
-from casas import Casa, CasaImposto, CasaVAPrisao, CasaSorteReves, CasaCofre 
+from casas import Casa, CasaImposto, CasaVAPrisao, CasaSorteReves, CasaCofre
 from propriedades import Propriedade, CasaMetro, CasaCompanhia
 from constantes import IMPOSTO_RENDA_VALOR, VALOR_FERROVIA, VALOR_COMPANHIA_SERVICO, TAXA_RIQUEZA_VALOR
 
@@ -24,7 +24,7 @@ class Tabuleiro:
         
         # Grupo 1: Marrom (Posições 1, 3)
         self._add_prop(nome="Avenida Sumaré", preco=60, aluguel=2, grupo="Marrom")
-        self.casas.append(CasaCofre(nome="Cofre"))  # Changed from _add_casa_simples to CasaCofre instance
+        self.casas.append(CasaCofre())
         self._add_prop(nome="Praça da Sé", preco=60, aluguel=4, grupo="Marrom")
         
         # Posição 4: Imposto de Renda
@@ -35,7 +35,7 @@ class Tabuleiro:
         
         # Grupo 2: Azul Claro (Posições 6, 8, 9)
         self._add_prop(nome="Rua 25 de Março", preco=100, aluguel=6, grupo="Azul Claro")
-        self.casas.append(CasaSorteReves(nome="Sorte ou Revés"))  # Changed from _add_casa_simples to CasaSorteReves instance
+        self.casas.append(CasaSorteReves())
         self._add_prop(nome="Avenida São João", preco=100, aluguel=6, grupo="Azul Claro")
         self._add_prop(nome="Avenida Paulista", preco=120, aluguel=8, grupo="Azul Claro")
         
@@ -53,7 +53,7 @@ class Tabuleiro:
         
         # Grupo 4: Laranja (Posições 16, 18, 19)
         self._add_prop(nome="Avenida Presidente Juscelino Kubitschek", preco=180, aluguel=14, grupo="Laranja")
-        self.casas.append(CasaCofre(nome="Cofre"))  # Changed from _add_casa_simples to CasaCofre instance
+        self.casas.append(CasaCofre())
         self._add_prop(nome="Avenida Engenheiro Luis Carlos Berrini", preco=180, aluguel=14, grupo="Laranja")
         self._add_prop(nome="Avenida Brigadeiro Faria Lima", preco=200, aluguel=16, grupo="Laranja")
         
@@ -62,7 +62,7 @@ class Tabuleiro:
         
         # Grupo 5: Vermelho (Posições 21, 23, 24)
         self._add_prop(nome="Ipanema", preco=220, aluguel=18, grupo="Vermelho")
-        self.casas.append(CasaSorteReves(nome="Sorte ou Revés"))  # Changed from _add_casa_simples to CasaSorteReves instance
+        self.casas.append(CasaSorteReves())
         self._add_prop(nome="Leblon", preco=220, aluguel=18, grupo="Vermelho")
         self._add_prop(nome="Copacabana", preco=240, aluguel=20, grupo="Vermelho")
         
@@ -81,14 +81,14 @@ class Tabuleiro:
         # Grupo 7: Verde (Posições 31, 32, 34)
         self._add_prop(nome="Barra da Tijuca", preco=300, aluguel=26, grupo="Verde")
         self._add_prop(nome="Jardim Botânico", preco=300, aluguel=26, grupo="Verde")
-        self.casas.append(CasaCofre(nome="Cofre"))  # Changed from _add_casa_simples to CasaCofre instance
+        self.casas.append(CasaCofre())
         self._add_prop(nome="Lagoa Rodrigo de Freitas", preco=320, aluguel=28, grupo="Verde")
         
         # Posição 35: Metrô/Ferrovia
         self.casas.append(CasaMetro(nome="Estação de Metrô República", preco=VALOR_FERROVIA))
         
         # Grupo 8: Azul Escuro (Posições 37, 39)
-        self.casas.append(CasaSorteReves(nome="Sorte ou Revés"))  # Changed from _add_casa_simples to CasaSorteReves instance
+        self.casas.append(CasaSorteReves())
         self._add_prop(nome="Avenida Morumbi", preco=350, aluguel=35, grupo="Azul Escuro")
         
         # Posição 38: Taxa de Riqueza

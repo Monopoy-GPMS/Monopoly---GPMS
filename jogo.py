@@ -11,42 +11,80 @@ from constantes import VALOR_PASSAGEM_SAIDA
 # Importações novas necessárias
 from propriedades import Propriedade, CasaCompanhia
 from casas import CasaImposto, CasaVAPrisao, CasaSorteReves, CasaCofre
+from cartas import BaralhoCartas, CartaDinheiro, CartaMovimento
 
 from dados import Dados
-from cartas import BaralhoCartas
-from regras_prisao import GestorPrisao
+from sistema_propostas import SistemaPropostas
 from construcao import GestorConstrucao
 from regras_propriedades import GestorPropriedades
-from sistema_propostas import SistemaPropostas
+from regras_prisao import GestorPrisao
+from ia_bot import GerenciadorBots
+from sistema_eventos import SistemaEventos, TipoEvento
+from integracao_cartas import GerenciadorCartasAvancado
+from gerenciador_inicializacao import GerenciadorInicializacao
+from exibidor_cartas import ExibidorCartas
+from negociador_propriedades import NegociadorPropriedades
+from ia_bot_negociacao import IIABotNegociacao
 
 class Jogo:
     
-    def __init__(self, nomes_jogadores):
+    def __init__(self, nomes_jogadores, num_humanos=None):
         """Inicializa o Banco, o Tabuleiro e os Jogadores."""
+        if num_humanos is None:
+            num_humanos = len(nomes_jogadores)
+        
+        GerenciadorInicializacao.validar_numero_jogadores(num_humanos)
+        lista_jogadores = GerenciadorInicializacao.gerar_lista_jogadores(num_humanos, nomes_jogadores)
+        
         self.banco = Banco()
         self.tabuleiro = Tabuleiro()
         
         self.dados_obj = Dados(num_dados=2)
         self.baralho_sorte = BaralhoCartas('SORTE')
-        self.baralho_cofre = BaralhoCartas('COFRE')  # Renamed baralho_reves to baralho_cofre for clarity and consistency
+        self.baralho_cofre = BaralhoCartas('COFRE')
         self.gestor_prisao = GestorPrisao(self.banco)
         self.gestor_construcao = GestorConstrucao(self.tabuleiro, self.banco)
         self.gestor_propriedades = GestorPropriedades(self.banco, self.tabuleiro)
         self.sistema_propostas = SistemaPropostas(self.banco, self.tabuleiro)
+        self.indice_turno_atual = 0
+        self.jogo_finalizado = False
         
         self.jogadores = []
         self.ultimo_d1 = 1 
         self.ultimo_d2 = 1 
         self.eh_duplo_ultimo = False
-        self.duplas_consecutivas = 0  # Track consecutive doubles
+        self.duplas_consecutivas = 0
 
-        for i, nome in enumerate(nomes_jogadores):
-            novo_jogador = Jogador(nome, f"Peça {i+1}")
-            self.jogadores.append(novo_jogador)
-            self.banco.inicializar_conta(nome)
+        self.sistema_eventos = SistemaEventos()
+        self.gerenciador_bots = GerenciadorBots()
+        self.exibidor_cartas = ExibidorCartas(tempo_exibicao=2.0)
+        self.negociador_propriedades = NegociadorPropriedades(self.banco)
+        self.ia_bot_negociacao = IIABotNegociacao()
+        self.gerenciador_cartas_avancado = GerenciadorCartasAvancado(self.sistema_eventos)
         
-        self.indice_turno_atual = 0
-        self.jogo_finalizado = False  # Track game state
+        for info in lista_jogadores:
+            novo_jogador = Jogador(info["nome"], info["peca"], is_ia=info["eh_bot"])
+            self.jogadores.append(novo_jogador)
+            self.banco.inicializar_conta(info["nome"])
+            
+            if info["eh_bot"]:
+                self.gerenciador_bots.criar_bot(info["nome"], info["dificuldade"])
+        
+        self._registrar_callbacks_eventos()
+
+    def _registrar_callbacks_eventos(self):
+        """Registra callbacks para eventos importantes do jogo"""
+        # Monitora saldo crítico
+        self.sistema_eventos.registrar_callback(
+            TipoEvento.SALDO_CRITICO,
+            lambda e: print(f"  [ALERTA] {e.jogador} com saldo crítico!")
+        )
+        
+        # Monitora monopólios
+        self.sistema_eventos.registrar_callback(
+            TipoEvento.MONOPÓLIO_COMPLETADO,
+            lambda e: print(f"  [MONOPÓLIO] {e.jogador} completou monopólio!")
+        )
 
     def rolar_dados(self):
         """Simula a rolagem de dois dados (2d6)."""
@@ -82,6 +120,9 @@ class Jogo:
         print(f"\n==========================================")
         print(f"TURNO DE: {jogador.nome} | Posição Inicial: {posicao_antiga}")
         print(f"==========================================")
+        
+        if jogador.is_ia:
+            print(f"  [BOT] {jogador.nome} está jogando...")
         
         if jogador.em_prisao:
             saiu, pode_mover, valor_movimento = self.gestor_prisao.processar_turno_prisao(jogador, self.dados_obj)
@@ -125,7 +166,7 @@ class Jogo:
         jogador_atual = self.jogadores[self.indice_turno_atual]
 
         if isinstance(casa_atual, (CasaSorteReves, CasaCofre)):
-            return {"tipo": "ACAO_AUTOMATICA", "casa": casa_atual}
+            return {"tipo": "PEGAR_CARTA", "casa": casa_atual}
 
         # 1. Opção de Compra
         if isinstance(casa_atual, Propriedade) and casa_atual.is_livre():
@@ -153,9 +194,36 @@ class Jogo:
         jogador_atual = self.jogadores[self.indice_turno_atual]
 
         if isinstance(casa_atual, (CasaSorteReves, CasaCofre)):
-            resultado = casa_atual.sorteio_evento(jogador_atual, self.banco)
-            print(f"  > Resultado sorteio: {resultado}")
-            return resultado
+            casa_atual.acao_ao_cair(jogador_atual, self.banco)
+            
+            # Se tiver sistema de cartas, executar aqui
+            print(f"\n  > ===== ACIONANDO BARALHO DE CARTAS =====")
+            
+            if isinstance(casa_atual, CasaSorteReves):
+                carta = self.baralho_sorte.pegar_carta()
+                tipo_baralho = 'SORTE'
+            else:
+                carta = self.baralho_cofre.pegar_carta()
+                tipo_baralho = 'COFRE'
+            
+            if carta:
+                # Exibe carta por 2 segundos antes de executar
+                resultado = self.exibidor_cartas.executar_carta_apos_delay(
+                    carta, jogador_atual, self.banco, self
+                )
+                
+                # Devolve carta ao baralho se aplicável
+                if isinstance(carta, CartaDinheiro) or isinstance(carta, CartaMovimento):
+                    self.baralho_sorte.devolver_carta(carta) if tipo_baralho == 'SORTE' else self.baralho_cofre.devolver_carta(carta)
+                
+                return {
+                    "tipo": "CARTA",
+                    "mensagem": carta.descricao,
+                    "tipo_baralho": tipo_baralho,
+                    "tempo_exibicao": 2.0
+                }
+            else:
+                return {"tipo": "CARTA", "mensagem": "Erro ao puxar carta"}
 
         # Ação de Imposto ou Vá para Prisão
         if isinstance(casa_atual, CasaVAPrisao):
@@ -233,6 +301,11 @@ class Jogo:
             print(f"  > Turno finalizado. Próximo jogador: {self.jogadores[self.indice_turno_atual].nome}")
         else:
             print(f"  > Jogou dados duplos! Joga novamente.")
+        
+        if self.jogadores:
+            proximo_jogador = self.jogadores[self.indice_turno_atual]
+            if proximo_jogador.is_ia and not self.jogo_finalizado:
+                self._executar_turno_automatico_bot(proximo_jogador)
         
         self.status_geral()
 
@@ -314,6 +387,56 @@ class Jogo:
         """
         return self.sistema_propostas.recusar_troca(jogador_receptor)
 
+    def propor_negociacao_propriedade(self, proponente, receptor, propriedade, valor_ofertado):
+        """Propõe negociação de propriedade específica"""
+        return self.negociador_propriedades.propor_negociacao(
+            proponente, receptor, propriedade, valor_ofertado
+        )
+    
+    def aceitar_negociacao(self, negociacao):
+        """Aceita negociação de propriedade"""
+        return self.negociador_propriedades.aceitar_negociacao(negociacao)
+    
+    def recusar_negociacao(self, negociacao):
+        """Recusa negociação de propriedade"""
+        return self.negociador_propriedades.recusar_negociacao(negociacao)
+    
+    def obter_propriedades_para_negociacao(self, jogador):
+        """Retorna propriedades de um jogador organizadas por categoria"""
+        propriedades_por_categoria = {
+            'cores': [],
+            'estacoes': [],
+            'servicos': [],
+            'hipotecadas': []
+        }
+        
+        for prop in jogador.propriedades:
+            if hasattr(prop, 'hipotecada') and prop.hipotecada:
+                propriedades_por_categoria['hipotecadas'].append(prop)
+            elif hasattr(prop, 'grupo_cor'):
+                if prop.grupo_cor == 'METRÔ':
+                    propriedades_por_categoria['estacoes'].append(prop)
+                elif prop.grupo_cor == 'SERVIÇO':
+                    propriedades_por_categoria['servicos'].append(prop)
+                else:
+                    propriedades_por_categoria['cores'].append(prop)
+        
+        return propriedades_por_categoria
+    
+    def bot_responder_negociacao(self, bot, negociacao):
+        """Bot decide se aceita negociação"""
+        aceita = self.ia_bot_negociacao.decidir_venda_propriedade(
+            bot, 
+            negociacao.propriedade, 
+            negociacao.valor_ofertado, 
+            self.banco
+        )
+        
+        if aceita:
+            return self.negociador_propriedades.aceitar_negociacao(negociacao)
+        else:
+            return self.negociador_propriedades.recusar_negociacao(negociacao)
+
     def hipotecar_propriedade(self, jogador, propriedade):
         """Hipoteca uma propriedade do jogador."""
         return self.gestor_propriedades.hipotecar_propriedade(jogador, propriedade)
@@ -321,3 +444,51 @@ class Jogo:
     def deshipotecar_propriedade(self, jogador, propriedade):
         """Deshipoteca uma propriedade do jogador."""
         return self.gestor_propriedades.deshipotecar_propriedade(jogador, propriedade)
+
+    def _executar_turno_automatico_bot(self, jogador_bot):
+        """
+        Executa automaticamente o turno completo de um bot.
+        
+        Args:
+            jogador_bot: Objeto do jogador bot
+        """
+        print(f"\n  [BOT AUTO] Iniciando turno automático para {jogador_bot.nome}...")
+        
+        import time
+        time.sleep(1)  # Delay para visualização
+        
+        # 1. Rolar dados e mover
+        casa_atual = self.rolar_dados_e_mover()
+        
+        # 2. Obter ação necessária
+        acao = self.obter_acao_para_casa(casa_atual)
+        
+        # 3. Executar ações automáticas
+        if acao["tipo"] == "ACAO_AUTOMATICA":
+            self.executar_acao_automatica(casa_atual)
+        
+        # 4. Para decisões de compra, usar bot
+        elif acao["tipo"] == "DECISAO_COMPRA":
+            resultado_bot = self.gerenciador_bots.executar_turno_bot(jogador_bot, self)
+            if resultado_bot.get("sucesso"):
+                for acao_bot in resultado_bot.get("acoes", []):
+                    print(f"    [BOT AÇÃO] {acao_bot}")
+                    self.sistema_eventos.disparar_evento(
+                        TipoEvento.COMPRA_PROPRIEDADE,
+                        jogador_bot.nome,
+                        f"Bot comprou {acao_bot.get('propriedade')}",
+                        {'propriedade': acao_bot.get('propriedade')}
+                    )
+        
+        # 5. Finalizar turno
+        self.finalizar_turno()
+
+    def obter_estatisticas_eventos(self, nome_jogador=None):
+        """Retorna estatísticas baseadas em eventos"""
+        if nome_jogador:
+            return self.sistema_eventos.obter_estatisticas_jogador(nome_jogador)
+        else:
+            return {
+                'total_eventos': len(self.sistema_eventos.eventos),
+                'tipos_eventos': list(set(e.tipo.value for e in self.sistema_eventos.eventos))
+            }
