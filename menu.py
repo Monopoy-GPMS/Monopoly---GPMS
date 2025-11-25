@@ -4,6 +4,7 @@
 import pygame
 import sys
 import math
+import random
 
 class CampoTexto:
     """Classe para campo de entrada de texto com design melhorado"""
@@ -260,6 +261,9 @@ class MenuInicial:
     
     def handle_events(self, event):
         """Processa eventos do menu"""
+        if event is None:
+            return None
+            
         # Eventos dos campos de texto
         for campo in self.campos_texto:
             campo.handle_event(event)
@@ -677,7 +681,3 @@ class TelaFimDeJogo:
             (150, 200, 255)
         )
         self.screen.blit(texto_props, (x_base + 50, y_base + 50))
-
-
-# Importação do random para as partículas
-import random

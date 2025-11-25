@@ -41,13 +41,12 @@ class Banco:
         
         # 2. Creditar no recebedor (se não for o "Banco" - dinheiro que sai de circulação)
         if recebedor != "Banco":
-            # Se o recebedor não for um jogador existente (ex: um imposto pago ao banco
-            # que é registrado temporariamente), ele deve ser um nome válido.
             if recebedor not in self.contas:
-                 # Cria a conta do recebedor (se for um jogador) ou ignora se for o Banco
-                pass # O dinheiro pago ao "Banco" desaparece da circulação (imposto, etc.)
-            else:
-                self.contas[recebedor] += valor
+                # Se for um pagamento entre jogadores e o recebedor não existe, criar conta
+                print(f"Aviso: Conta de {recebedor} não existe. Criando conta automaticamente.")
+                self.contas[recebedor] = 0
+            
+            self.contas[recebedor] += valor
         
         print(f"  [SUCESSO] {pagador} pagou R${valor} para {recebedor}.")
         return True
@@ -67,6 +66,35 @@ class Banco:
     def consultar_saldo(self, nome_jogador):
         """Permite consultar o saldo (Parte do Requisito 04: Usabilidade)."""
         return self.contas.get(nome_jogador, 0)
+    
+    def tem_saldo_suficiente(self, jogador, valor):
+        """
+        Verifica se o jogador tem saldo suficiente para realizar uma transação.
+        
+        Args:
+            jogador: Nome do jogador
+            valor: Valor a ser verificado
+            
+        Returns:
+            bool: True se tem saldo suficiente
+        """
+        return self.contas.get(jogador, 0) >= valor
+    
+    def ajustar_saldo(self, jogador, novo_saldo):
+        """
+        Ajusta o saldo de um jogador diretamente.
+        Usar com cuidado - preferencialmente usar pagar() ou depositar().
+        
+        Args:
+            jogador: Nome do jogador
+            novo_saldo: Novo valor do saldo
+        """
+        if jogador in self.contas:
+            saldo_antigo = self.contas[jogador]
+            self.contas[jogador] = novo_saldo
+            print(f"  [AJUSTE] Saldo de {jogador} ajustado de R${saldo_antigo} para R${novo_saldo}")
+            return True
+        return False
     
     def status_contas(self):
         """Imprime o status de todas as contas para monitoramento."""
