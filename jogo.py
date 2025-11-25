@@ -447,25 +447,78 @@ class Jogo:
 
     def _executar_turno_automatico_bot(self, jogador_bot):
         """
-        Executa automaticamente o turno completo de um bot.
-        
-        Args:
-            jogador_bot: Objeto do jogador bot
+        Executa turno do bot com delays usando threading para evitar travamento.
+        Permite que o jogo continue respondendo normalmente enquanto o bot joga.
         """
-        print(f"\n  [BOT AUTO] Iniciando turno automático para {jogador_bot.nome}...")
-        
+        import threading
         import time
-        time.sleep(1)  # Delay para visualização
+        
+        def executar_bot_thread():
+            """Executa o turno do bot em thread separada"""
+            global turno_bot_em_execucao
+            
+            print(f"\n  [BOT AUTO] Iniciando turno automático para {jogador_bot.nome}...")
+            turno_bot_em_execucao = True  # Desabilita HUD durante bot turn
+            
+            try:
+                time.sleep(0.5)
+                
+                # 1. Rolar dados e mover
+                casa_atual = self.rolar_dados_e_mover()
+                time.sleep(0.3)
+                
+                # 2. Obter ação necessária
+                acao = self.obter_acao_para_casa(casa_atual)
+                
+                # 3. Executar ações automáticas
+                if acao["tipo"] == "ACAO_AUTOMATICA":
+                    self.executar_acao_automatica(casa_atual)
+                    time.sleep(0.3)
+                
+                # 4. Para decisões de compra, usar bot
+                elif acao["tipo"] == "DECISAO_COMPRA":
+                    resultado_bot = self.gerenciador_bots.executar_turno_bot(jogador_bot, self)
+                    if resultado_bot.get("sucesso"):
+                        for acao_bot in resultado_bot.get("acoes", []):
+                            print(f"    [BOT AÇÃO] {acao_bot}")
+                            time.sleep(0.3)
+                            self.sistema_eventos.disparar_evento(
+                                TipoEvento.COMPRA_PROPRIEDADE,
+                                jogador_bot.nome,
+                                f"Bot comprou {acao_bot.get('propriedade')}",
+                                {'propriedade': acao_bot.get('propriedade')}
+                            )
+                
+                # 5. Finalizar turno com delay
+                time.sleep(0.3)
+                self.finalizar_turno()
+            finally:
+                turno_bot_em_execucao = False  # Reabilita HUD após bot terminar
+        
+        thread = threading.Thread(target=executar_bot_thread, daemon=True)
+        thread.start()
+
+    def executar_turno_bot_nao_bloqueante(self, jogador_bot):
+        """
+        Executa o turno de um bot de forma não-bloqueante com delays entre ações.
+        Permite que o jogo continue respondendo enquanto o bot joga.
+        """
+        import time
+        
+        # Delay inicial antes de iniciar o turno do bot
+        time.sleep(0.5)
         
         # 1. Rolar dados e mover
         casa_atual = self.rolar_dados_e_mover()
+        time.sleep(0.3)  # Reduzido para 300ms para animação dos dados
         
         # 2. Obter ação necessária
         acao = self.obter_acao_para_casa(casa_atual)
         
-        # 3. Executar ações automáticas
+        # 3. Executar ações automáticas (Sorte, Cofre, Imposto, etc)
         if acao["tipo"] == "ACAO_AUTOMATICA":
-            self.executar_acao_automatica(casa_atual)
+            resultado = self.executar_acao_automatica(casa_atual)
+            time.sleep(0.3)
         
         # 4. Para decisões de compra, usar bot
         elif acao["tipo"] == "DECISAO_COMPRA":
@@ -473,6 +526,7 @@ class Jogo:
             if resultado_bot.get("sucesso"):
                 for acao_bot in resultado_bot.get("acoes", []):
                     print(f"    [BOT AÇÃO] {acao_bot}")
+                    time.sleep(0.3)
                     self.sistema_eventos.disparar_evento(
                         TipoEvento.COMPRA_PROPRIEDADE,
                         jogador_bot.nome,
@@ -480,7 +534,8 @@ class Jogo:
                         {'propriedade': acao_bot.get('propriedade')}
                     )
         
-        # 5. Finalizar turno
+        # 5. Finalizar turno com delay
+        time.sleep(0.3)
         self.finalizar_turno()
 
     def obter_estatisticas_eventos(self, nome_jogador=None):

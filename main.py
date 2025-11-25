@@ -76,12 +76,10 @@ AJUSTE_GLOBAL_PEOES_Y = 0      # Aumentar para mover peões para BAIXO, diminuir
 # ]
 
 MOSTRAR_HUD_MENU = True  # Enable menu display
-AJUSTE_HUD_X = 1250      # Position for bottom-right (adjusted to fit on 1600px wide screen)
-AJUSTE_HUD_Y = 620       # Position for bottom-right (adjusted to fit on 900px tall screen)
-
-# Posição base do menu de turno (HUD principal)
+# POSIÇÃO BASE DO MENU DE TURNO (HUD PRINCIPAL) - MODIFICADA PARA MELHOR LAYOUT
 HUD_MENU_X = 10                # Posição X base (esquerda)
-HUD_MENU_Y = 480               # Posição Y base (abaixo do histórico)
+AJUSTE_HUD_Y = 135
+HUD_MENU_Y = 480 + AJUSTE_HUD_Y # Posição Y base (abaixo do histórico)
 HUD_MENU_WIDTH = 215
 HUD_MENU_HEIGHT = 260  # Increased from 210 to accommodate "Passar a Vez" button
 
@@ -89,10 +87,13 @@ HUD_MENU_HEIGHT = 260  # Increased from 210 to accommodate "Passar a Vez" button
 AJUSTE_CONSTRUCOES_X = 200     # Aumentado de 0 para 200 - move menus popups para DIREITA
 AJUSTE_CONSTRUCOES_Y = 0       # Aumentar para mover construções para BAIXO
 
+AJUSTE_HUD_X = 0
+# AJUSTE_HUD_Y = 0 # Removed and replaced by the above
+
 print(f"[v0] Board image size: {BOARD_IMG_WIDTH}x{BOARD_IMG_HEIGHT}")
 print(f"[v0] Board position on screen: ({X_TABULEIRO}, {Y_TABULEIRO})")
 print(f"[v0] Pawn adjustment: ({AJUSTE_GLOBAL_PEOES_X}, {AJUSTE_GLOBAL_PEOES_Y})")
-print(f"[v0] HUD adjustment: ({AJUSTE_HUD_X}, {AJUSTE_HUD_Y})")
+print(f"[v0] HUD adjustment: ({HUD_MENU_X}, {HUD_MENU_Y})")
 print(f"[v0] Construction adjustment: ({AJUSTE_CONSTRUCOES_X}, {AJUSTE_CONSTRUCOES_Y})")
 
 # The board has 40 squares: 11 on each side (including corners)
@@ -196,11 +197,11 @@ for i in range(1, 7):
 # --- Player info display positions (right side) ---
 POSICOES_TEXTO_JOGADOR = [
     (LARGURA_TELA - 240, 20),    # Player 1
-    (LARGURA_TELA - 240, 140),   # Player 2 (increased from 100)
-    (LARGURA_TELA - 240, 260),   # Player 3 (increased from 180)
-    (LARGURA_TELA - 240, 380),   # Player 4 (increased from 260)
-    (LARGURA_TELA - 240, 500),   # Player 5 (increased from 340)
-    (LARGURA_TELA - 240, 620)    # Player 6 (increased from 420)
+    (LARGURA_TELA - 240, 130),   # Player 2
+    (LARGURA_TELA - 240, 240),   # Player 3
+    (LARGURA_TELA - 240, 350),   # Player 4
+    (LARGURA_TELA - 240, 460),   # Player 5
+    (LARGURA_TELA - 240, 570)    # Player 6
 ]
 
 BOARD_CENTER_X = BOARD_IMG_WIDTH // 2
@@ -416,8 +417,8 @@ def desenhar_menu_propostas():
         screen.blit(texto_prop, (menu_x + 20, y_offset))
         
         # Property value
-        if hasattr(prop, 'preco'):
-            texto_valor = FONTE_PEQUENA.render(f"R${prop.preco}", True, (150, 255, 150))
+        if hasattr(prop, 'preco_compra'):
+            texto_valor = FONTE_PEQUENA.render(f"R${prop.preco_compra}", True, (150, 255, 150))
             screen.blit(texto_valor, (menu_x + menu_width - 100, y_offset))
         
         y_offset += 25
@@ -600,75 +601,118 @@ def desenhar_menu_turno():
     largura_botao = 195
     x_botao = menu_x + 10
     
-    desenhar_menu_turno.botao_lancar_rect = pygame.Rect(x_botao, y_botao, largura_botao, altura_botao)
+    # Botão Lançar Dados - ativo apenas se é turno do jogador e não é turno de bot
+    if estado_turno == "ANTES_LANCAR_DADOS" and not turno_bot_em_execucao:
+        desenhar_menu_turno.botao_lancar_rect = pygame.Rect(x_botao, y_botao, largura_botao, altura_botao)
+        # Colorido se não bloqueado, cinza se bloqueado
+        cor_fundo = (50, 120, 50) if not botoes_bloqueados else (80, 80, 80)
+        cor_borda = (100, 200, 100) if not botoes_bloqueados else (120, 120, 120)
+        pygame.draw.rect(screen, cor_fundo, (x_botao, y_botao, largura_botao, altura_botao))
+        pygame.draw.rect(screen, cor_borda, (x_botao, y_botao, largura_botao, altura_botao), 2)
+        texto_lancar = FONTE_PEQUENA.render("LANÇAR DADOS", True, (255, 255, 255))
+        screen.blit(texto_lancar, (x_botao + 40, y_botao + 8))
+        y_botao += 50
+    else:
+        # Botão Lançar Dados - sempre desenhado mas cinza quando desabilitado
+        desenhar_menu_turno.botao_lancar_rect = pygame.Rect(x_botao, y_botao, largura_botao, altura_botao)
+        cor_fundo = (80, 80, 80)
+        cor_borda = (120, 120, 120)
+        pygame.draw.rect(screen, cor_fundo, (x_botao, y_botao, largura_botao, altura_botao))
+        pygame.draw.rect(screen, cor_borda, (x_botao, y_botao, largura_botao, altura_botao), 2)
+        texto_lancar = FONTE_PEQUENA.render("LANÇAR DADOS", True, (150, 150, 150))
+        screen.blit(texto_lancar, (x_botao + 40, y_botao + 8))
+        y_botao += 50
     
-    # Botão Lançar Dados
-    cor_fundo = (50, 120, 50) if mouse_sobre_botao(x_botao, y_botao, largura_botao, altura_botao) else (40, 100, 40)
-    pygame.draw.rect(screen, cor_fundo, (x_botao, y_botao, largura_botao, altura_botao))
-    pygame.draw.rect(screen, (100, 200, 100), (x_botao, y_botao, largura_botao, altura_botao), 2)
-    texto_lancar = FONTE_PEQUENA.render("LANÇAR DADOS", True, (255, 255, 255))
-    screen.blit(texto_lancar, (x_botao + 40, y_botao + 8))
+    if estado_turno == "APOS_LANCAR_DADOS" and not turno_bot_em_execucao:
+        casa_atual = jogo_backend.tabuleiro.casas[jogador_atual.posicao]
+        
+        if isinstance(casa_atual, Propriedade) and not casa_atual.proprietario:
+            desenhar_menu_turno.botao_comprar_rect = pygame.Rect(x_botao, y_botao, largura_botao, altura_botao)
+            cor_fundo = (100, 150, 50) if not botoes_bloqueados else (100, 100, 50)
+            cor_borda = (200, 200, 100) if not botoes_bloqueados else (150, 150, 100)
+            pygame.draw.rect(screen, cor_fundo, (x_botao, y_botao, largura_botao, altura_botao))
+            pygame.draw.rect(screen, cor_borda, (x_botao, y_botao, largura_botao, altura_botao), 2)
+            texto_comprar = FONTE_PEQUENA.render("COMPRAR", True, (255, 255, 255))
+            screen.blit(texto_comprar, (x_botao + 60, y_botao + 8))
+            y_botao += 50
+        else:
+            # Botão Comprar desabilitado (cinza)
+            desenhar_menu_turno.botao_comprar_rect = pygame.Rect(x_botao, y_botao, largura_botao, altura_botao)
+            cor_fundo = (80, 80, 80)
+            cor_borda = (120, 120, 120)
+            pygame.draw.rect(screen, cor_fundo, (x_botao, y_botao, largura_botao, altura_botao))
+            pygame.draw.rect(screen, cor_borda, (x_botao, y_botao, largura_botao, altura_botao), 2)
+            texto_comprar = FONTE_PEQUENA.render("COMPRAR", True, (150, 150, 150))
+            screen.blit(texto_comprar, (x_botao + 60, y_botao + 8))
+            y_botao += 50
+    elif estado_turno == "APOS_LANCAR_DADOS" or turno_bot_em_execucao:
+        # Botão Comprar desabilitado durante turno de bot
+        desenhar_menu_turno.botao_comprar_rect = pygame.Rect(x_botao, y_botao, largura_botao, altura_botao)
+        cor_fundo = (80, 80, 80)
+        cor_borda = (120, 120, 120)
+        pygame.draw.rect(screen, cor_fundo, (x_botao, y_botao, largura_botao, altura_botao))
+        pygame.draw.rect(screen, cor_borda, (x_botao, y_botao, largura_botao, altura_botao), 2)
+        texto_comprar = FONTE_PEQUENA.render("COMPRAR", True, (150, 150, 150))
+        screen.blit(texto_comprar, (x_botao + 60, y_botao + 8))
+        y_botao += 50
     
-    y_botao += 50
+    if estado_turno == "APOS_LANCAR_DADOS" and not turno_bot_em_execucao and len(jogador_atual.propriedades) > 0:
+        desenhar_menu_turno.botao_propriedades_rect = pygame.Rect(x_botao, y_botao, largura_botao, altura_botao)
+        cor_fundo = (100, 80, 50) if not botoes_bloqueados else (100, 80, 50)
+        cor_borda = (200, 150, 100) if not botoes_bloqueados else (150, 120, 80)
+        pygame.draw.rect(screen, cor_fundo, (x_botao, y_botao, largura_botao, altura_botao))
+        pygame.draw.rect(screen, cor_borda, (x_botao, y_botao, largura_botao, altura_botao), 2)
+        texto_propriedades = FONTE_PEQUENA.render("PROPRIEDADES", True, (255, 255, 255))
+        screen.blit(texto_propriedades, (x_botao + 35, y_botao + 8))
+        y_botao += 50
+    elif estado_turno == "APOS_LANCAR_DADOS" and len(jogador_atual.propriedades) > 0:
+        # Propriedades desabilitado durante bot turn
+        desenhar_menu_turno.botao_propriedades_rect = pygame.Rect(x_botao, y_botao, largura_botao, altura_botao)
+        cor_fundo = (80, 80, 80)
+        cor_borda = (120, 120, 120)
+        pygame.draw.rect(screen, cor_fundo, (x_botao, y_botao, largura_botao, altura_botao))
+        pygame.draw.rect(screen, cor_borda, (x_botao, y_botao, largura_botao, altura_botao), 2)
+        texto_propriedades = FONTE_PEQUENA.render("PROPRIEDADES", True, (150, 150, 150))
+        screen.blit(texto_propriedades, (x_botao + 35, y_botao + 8))
+        y_botao += 50
     
-    desenhar_menu_turno.botao_comprar_rect = pygame.Rect(x_botao, y_botao, largura_botao, altura_botao)
-    cor_fundo = (100, 150, 50) if mouse_sobre_botao(x_botao, y_botao, largura_botao, altura_botao) else (80, 120, 40)
-    pygame.draw.rect(screen, cor_fundo, (x_botao, y_botao, largura_botao, altura_botao))
-    pygame.draw.rect(screen, (200, 200, 100), (x_botao, y_botao, largura_botao, altura_botao), 2)
-    texto_comprar = FONTE_PEQUENA.render("COMPRAR", True, (255, 255, 255))
-    screen.blit(texto_comprar, (x_botao + 60, y_botao + 8))
+    if estado_turno == "APOS_LANCAR_DADOS" and not turno_bot_em_execucao and len(jogador_atual.propriedades) > 0:
+        desenhar_menu_turno.botao_negociar_rect = pygame.Rect(x_botao, y_botao, largura_botao, altura_botao)
+        cor_fundo = (100, 50, 100) if not botoes_bloqueados else (100, 50, 100)
+        cor_borda = (200, 100, 200) if not botoes_bloqueados else (150, 80, 150)
+        pygame.draw.rect(screen, cor_fundo, (x_botao, y_botao, largura_botao, altura_botao))
+        pygame.draw.rect(screen, cor_borda, (x_botao, y_botao, largura_botao, altura_botao), 2)
+        texto_negociar = FONTE_PEQUENA.render("NEGOCIAR", True, (255, 255, 255))
+        screen.blit(texto_negociar, (x_botao + 50, y_botao + 8))
+        y_botao += 50
+    elif estado_turno == "APOS_LANCAR_DADOS" and len(jogador_atual.propriedades) > 0:
+        # Negociar desabilitado durante bot turn
+        desenhar_menu_turno.botao_negociar_rect = pygame.Rect(x_botao, y_botao, largura_botao, altura_botao)
+        cor_fundo = (80, 80, 80)
+        cor_borda = (120, 120, 120)
+        pygame.draw.rect(screen, cor_fundo, (x_botao, y_botao, largura_botao, altura_botao))
+        pygame.draw.rect(screen, cor_borda, (x_botao, y_botao, largura_botao, altura_botao), 2)
+        texto_negociar = FONTE_PEQUENA.render("NEGOCIAR", True, (150, 150, 150))
+        screen.blit(texto_negociar, (x_botao + 50, y_botao + 8))
+        y_botao += 50
     
-    y_botao += 50
-    
-    desenhar_menu_turno.botao_propriedades_rect = pygame.Rect(x_botao, y_botao, largura_botao, altura_botao)
-    # Botão Gerenciador de Propriedades
-    cor_fundo = (100, 80, 50) if mouse_sobre_botao(x_botao, y_botao, largura_botao, altura_botao) else (80, 60, 40)
-    pygame.draw.rect(screen, cor_fundo, (x_botao, y_botao, largura_botao, altura_botao))
-    pygame.draw.rect(screen, (200, 150, 100), (x_botao, y_botao, largura_botao, altura_botao), 2)
-    texto_propriedades = FONTE_PEQUENA.render("PROPRIEDADES", True, (255, 255, 255))
-    screen.blit(texto_propriedades, (x_botao + 35, y_botao + 8))
-    
-    y_botao += 50
-    
-    desenhar_menu_turno.botao_passar_rect = pygame.Rect(x_botao, y_botao, largura_botao, altura_botao)
-    # Botão Passar a Vez
-    cor_fundo = (150, 50, 50) if mouse_sobre_botao(x_botao, y_botao, largura_botao, altura_botao) else (120, 40, 40)
-    pygame.draw.rect(screen, cor_fundo, (x_botao, y_botao, largura_botao, altura_botao))
-    pygame.draw.rect(screen, (200, 100, 100), (x_botao, y_botao, largura_botao, altura_botao), 2)
-    texto_passar = FONTE_PEQUENA.render("PASSAR A VEZ", True, (255, 255, 255))
-    screen.blit(texto_passar, (x_botao + 40, y_botao + 8))
-
-def mouse_sobre_botao(x, y, largura, altura):
-    """Verifica se mouse está sobre um botão"""
-    mouse_pos = pygame.mouse.get_pos()
-    return x <= mouse_pos[0] <= x + largura and y <= mouse_pos[1] <= y + altura
-
-# --- INICIALIZA AS TELAS ---
-menu_inicial = MenuInicial(screen)
-tela_fim_jogo = None
-estado_jogo = "MENU"
-nomes_jogadores = []
-jogo_backend = None
-
-# --- SETUP PARA O LOOP PRINCIPAL ---
-running = True
-clock = pygame.time.Clock()
-
-# --- VARIÁVEIS GLOBAIS ---
-MAX_MENSAGENS_LOG = 50
-MAX_MENSAGENS_FEEDBACK = 50
-scroll_feedback = 0
-mensagens_log = []
-mensagens_feedback = []
-offset_scroll_feedback = 0
-
-mostrar_menu_construcao = False
-mostrar_menu_proposta = False
-mostrar_menu_compra = False
-
-tempo_mensagem_carta = 0
-mensagem_carta_atual = ""
-mostrar_popup_carta = False
+    if estado_turno == "APOS_LANCAR_DADOS" and not turno_bot_em_execucao:
+        desenhar_menu_turno.botao_passar_rect = pygame.Rect(x_botao, y_botao, largura_botao, altura_botao)
+        cor_fundo = (150, 50, 50) if not botoes_bloqueados else (100, 50, 50)
+        cor_borda = (200, 100, 100) if not botoes_bloqueados else (150, 80, 80)
+        pygame.draw.rect(screen, cor_fundo, (x_botao, y_botao, largura_botao, altura_botao))
+        pygame.draw.rect(screen, cor_borda, (x_botao, y_botao, largura_botao, altura_botao), 2)
+        texto_passar = FONTE_PEQUENA.render("PASSAR A VEZ", True, (255, 255, 255))
+        screen.blit(texto_passar, (x_botao + 50, y_botao + 8))
+    else:
+        # Passar desabilitado durante turno de bot
+        desenhar_menu_turno.botao_passar_rect = pygame.Rect(x_botao, y_botao, largura_botao, altura_botao)
+        cor_fundo = (80, 80, 80)
+        cor_borda = (120, 120, 120)
+        pygame.draw.rect(screen, cor_fundo, (x_botao, y_botao, largura_botao, altura_botao))
+        pygame.draw.rect(screen, cor_borda, (x_botao, y_botao, largura_botao, altura_botao), 2)
+        texto_passar = FONTE_PEQUENA.render("PASSAR A VEZ", True, (150, 150, 150))
+        screen.blit(texto_passar, (x_botao + 50, y_botao + 8))
 
 def desenhar_popup_carta():
     """Desenha um pop-up com a carta puxada"""
@@ -738,14 +782,261 @@ def desenhar_popup_carta():
     
     tempo_mensagem_carta -= 1
 
-dado1_valor = 1
-dado2_valor = 1
+# --- Início das atualizações para desenhar_painel_propriedades_jogador ---
+def desenhar_painel_propriedades_jogador(jogador):
+    """
+    Renderiza um painel com as propriedades do jogador ao clicar em seu nome.
+    Propriedades agrupadas por cor com ícones coloridos.
+    """
+    if not jogador or not jogador.propriedades:
+        return
+    
+    CORES_PROPRIEDADES = {
+        "Marrom": (139, 69, 19),
+        "Azul Claro": (100, 149, 237),
+        "Rosa": (255, 192, 203),
+        "Laranja": (255, 165, 0),
+        "Vermelho": (220, 20, 60),
+        "Amarelo": (255, 255, 0),
+        "Verde": (34, 139, 34),
+        "Azul Escuro": (25, 25, 112),
+        "METRÔ": (128, 128, 128),
+        "SERVIÇO": (200, 100, 50),
+    }
+    
+    propriedades_por_grupo = {}
+    for prop in jogador.propriedades:
+        grupo = getattr(prop, 'grupo_cor', 'Sem Grupo')
+        if grupo not in propriedades_por_grupo:
+            propriedades_por_grupo[grupo] = []
+        propriedades_por_grupo[grupo].append(prop)
+    
+    # Calcular altura do painel
+    altura_estimada = 60  # Header
+    for grupo, props in propriedades_por_grupo.items():
+        altura_estimada += 30 + (len(props) * 28)  # Group header + properties
+    
+    painel_height = min(600, max(200, altura_estimada))
+    painel_width = 400
+    painel_x = (LARGURA_TELA - painel_width) // 2
+    painel_y = (ALTURA_TELA - painel_height) // 2
+    
+    # Draw background with transparency
+    overlay = pygame.Surface((LARGURA_TELA, ALTURA_TELA))
+    overlay.set_alpha(100)
+    overlay.fill((0, 0, 0))
+    screen.blit(overlay, (0, 0))
+    
+    # Draw panel
+    pygame.draw.rect(screen, (40, 40, 80), (painel_x, painel_y, painel_width, painel_height))
+    pygame.draw.rect(screen, (150, 150, 200), (painel_x, painel_y, painel_width, painel_height), 3)
+    
+    # Title
+    titulo = FONTE_GRANDE.render(f"Propriedades de {jogador.nome}", True, (200, 255, 200))
+    titulo_rect = titulo.get_rect()
+    titulo_rect.center = (painel_x + painel_width // 2, painel_y + 15)
+    screen.blit(titulo, titulo_rect)
+    
+    # Close button
+    fechar_rect = pygame.Rect(painel_x + painel_width - 35, painel_y + 5, 30, 30)
+    mouse_pos = pygame.mouse.get_pos()
+    cor_fechar = (255, 100, 100) if fechar_rect.collidepoint(mouse_pos) else (200, 80, 80)
+    pygame.draw.rect(screen, cor_fechar, fechar_rect)
+    texto_x = FONTE_PEQUENA.render("X", True, (255, 255, 255))
+    texto_x_rect = texto_x.get_rect()
+    texto_x_rect.center = fechar_rect.center
+    screen.blit(texto_x, texto_x_rect)
+    desenhar_painel_propriedades_jogador.fechar_rect = fechar_rect
+    
+    y_offset = painel_y + 45
+    
+    # Draw properties grouped by color
+    for grupo, props in sorted(propriedades_por_grupo.items()):
+        cor_grupo = CORES_PROPRIEDADES.get(grupo, (128, 128, 128))
+        
+        # Group title with colored background
+        pygame.draw.rect(screen, cor_grupo, (painel_x + 10, y_offset, painel_width - 20, 25))
+        texto_grupo = FONTE_PEQUENA.render(grupo, True, (255, 255, 255))
+        screen.blit(texto_grupo, (painel_x + 15, y_offset + 5))
+        y_offset += 28
+        
+        for prop in props:
+            # Draw colored dot icon
+            pygame.draw.circle(screen, cor_grupo, (painel_x + 20, y_offset + 10), 6)
+            
+            # Property name
+            texto_prop = FONTE_PEQUENA.render(prop.nome, True, (200, 220, 255))
+            screen.blit(texto_prop, (painel_x + 35, y_offset + 4))
+            
+            y_offset += 28
+# --- Fim das atualizações para desenhar_painel_propriedades_jogador ---
 
-estado_turno = "ANTES_LANCAR_DADOS"  # Add this with other global variables
-dados_lancados = False  # New variable to track if dice have been rolled
+def desenhar_menu_negociacao():
+    """Desenha o menu para negociação de propriedades"""
+    if not mostrar_menu_negociacao:
+        return
+    
+    menu_width = 700
+    menu_height = 550
+    menu_x = BOARD_CENTER_X - menu_width // 2 + AJUSTE_CONSTRUCOES_X
+    menu_y = BOARD_CENTER_Y - menu_height // 2 + AJUSTE_CONSTRUCOES_Y
+    
+    pygame.draw.rect(screen, (50, 50, 100), (menu_x, menu_y, menu_width, menu_height))
+    pygame.draw.rect(screen, (150, 150, 200), (menu_x, menu_y, menu_width, menu_height), 3)
+    
+    titulo = FONTE_GRANDE.render("Negociar Propriedades", True, (200, 255, 200))
+    screen.blit(titulo, (menu_x + 30, menu_y + 10))
+    
+    botao_fechar_rect = pygame.Rect(menu_x + menu_width - 40, menu_y + 10, 35, 35)
+    pygame.draw.rect(screen, (150, 50, 50), botao_fechar_rect)
+    pygame.draw.rect(screen, (255, 100, 100), botao_fechar_rect, 2)
+    texto_fechar = FONTE_MEDIA.render("X", True, (255, 255, 255))
+    screen.blit(texto_fechar, (botao_fechar_rect.x + 10, botao_fechar_rect.y + 5))
+    desenhar_menu_negociacao.fechar_rect = botao_fechar_rect
+    
+    # Players to negotiate with
+    jogador_atual = jogo_backend.jogadores[jogo_backend.indice_turno_atual]
+    desenhar_menu_negociacao.player_buttons = []
+    x_player_btn = menu_x + 20
+    y_player_btn = menu_y + 55
+    
+    screen.blit(FONTE_MEDIA.render("Negociar com:", True, (255, 255, 255)), (menu_x + 20, y_player_btn - 20))
+    
+    for i, jogador in enumerate(jogo_backend.jogadores):
+        if jogador == jogador_atual or jogador.falido:
+            continue
+        
+        btn_rect = pygame.Rect(x_player_btn, y_player_btn, 90, 30)
+        mouse_pos = pygame.mouse.get_pos()
+        cor_btn = (80, 120, 200) if btn_rect.collidepoint(mouse_pos) else (50, 80, 150)
+        pygame.draw.rect(screen, cor_btn, btn_rect)
+        pygame.draw.rect(screen, (150, 200, 255), btn_rect, 2)
+        
+        txt = FONTE_PEQUENA.render(jogador.nome, True, (255, 255, 255))
+        screen.blit(txt, (btn_rect.x + 10, btn_rect.y + 5))
+        desenhar_menu_negociacao.player_buttons.append((btn_rect, jogador))
+        
+        x_player_btn += 100
+        if x_player_btn > menu_x + menu_width - 90:
+            x_player_btn = menu_x + 20
+            y_player_btn += 35
+    
+    # If a player is selected, show their properties and yours
+    if hasattr(desenhar_menu_negociacao, 'jogador_selecionado_para_negociacao'):
+        jogador_a_trocar = desenhar_menu_negociacao.jogador_selecionado_para_negociacao
+        
+        y_offset = y_player_btn + 45
+        
+        # Your properties
+        screen.blit(FONTE_MEDIA.render("Suas Propriedades:", True, (255, 255, 255)), (menu_x + 20, y_offset))
+        y_offset += 30
+        
+        desenhar_menu_negociacao.sua_propriedades_buttons = []
+        for i, prop in enumerate(jogador_atual.propriedades):
+            prop_rect = pygame.Rect(menu_x + 25, y_offset + i * 28, menu_width - 70, 25)
+            mouse_pos = pygame.mouse.get_pos()
+            cor_prop = (100, 150, 100) if prop_rect.collidepoint(mouse_pos) else (50, 80, 50)
+            
+            if hasattr(desenhar_menu_negociacao, 'sua_prop_selecionada') and desenhar_menu_negociacao.sua_prop_selecionada == prop:
+                cor_prop = (150, 200, 100) # Highlight selected
+            
+            pygame.draw.rect(screen, cor_prop, prop_rect)
+            pygame.draw.rect(screen, (150, 255, 150), prop_rect, 2)
+            txt = FONTE_PEQUENA.render(f"{prop.nome} (R${prop.preco_compra})", True, (255, 255, 255))
+            screen.blit(txt, (prop_rect.x + 5, prop_rect.y + 5))
+            desenhar_menu_negociacao.sua_propriedades_buttons.append((prop_rect, prop))
+        
+        y_offset += len(jogador_atual.propriedades) * 28 + 30
+        
+        # Other player's properties
+        screen.blit(FONTE_MEDIA.render(f"{jogador_a_trocar.nome}'s Propriedades:", True, (255, 255, 255)), (menu_x + 20, y_offset))
+        y_offset += 30
+        
+        desenhar_menu_negociacao.outra_propriedades_buttons = []
+        for i, prop in enumerate(jogador_a_trocar.propriedades):
+            prop_rect = pygame.Rect(menu_x + 25, y_offset + i * 28, menu_width - 70, 25)
+            mouse_pos = pygame.mouse.get_pos()
+            cor_prop = (100, 100, 150) if prop_rect.collidepoint(mouse_pos) else (50, 50, 80)
+            pygame.draw.rect(screen, cor_prop, prop_rect)
+            pygame.draw.rect(screen, (150, 150, 255), prop_rect, 2)
+            txt = FONTE_PEQUENA.render(f"{prop.nome} (R${prop.preco_compra})", True, (255, 255, 255))
+            screen.blit(txt, (prop_rect.x + 5, prop_rect.y + 5))
+            desenhar_menu_negociacao.outra_propriedades_buttons.append((prop_rect, prop))
+        
+        # Button to propose trade (currently directly trades if clicked)
+        x_trade_btn = menu_x + menu_width - 160
+        y_trade_btn = menu_y + menu_height - 50
+        
+        if hasattr(desenhar_menu_negociacao, 'sua_prop_selecionada') and desenhar_menu_negociacao.sua_prop_selecionada:
+            trade_btn_rect = pygame.Rect(x_trade_btn, y_trade_btn, 140, 35)
+            mouse_pos = pygame.mouse.get_pos()
+            cor_trade_btn = (150, 100, 50) if trade_btn_rect.collidepoint(mouse_pos) else (100, 80, 40)
+            pygame.draw.rect(screen, cor_trade_btn, trade_btn_rect)
+            pygame.draw.rect(screen, (200, 150, 100), trade_btn_rect, 2)
+            
+            txt_trade = FONTE_PEQUENA.render("Propor Troca", True, (255, 255, 255))
+            screen.blit(txt_trade, (trade_btn_rect.x + 15, trade_btn_rect.y + 8))
+            desenhar_menu_negociacao.propor_troca_rect = trade_btn_rect
+
+def mouse_sobre_botao(x, y, largura, altura):
+    """Verifica se o mouse está sobre um botão retangular"""
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    return x < mouse_x < x + largura and y < mouse_y < y + altura
+
+# --- Variáveis Globais do Jogo ---
+running = True
+jogo_backend = None
+estado_jogo = "MENU" # MENU, INICIO_TURNO, FIM_JOGO
+estado_turno = "ANTES_LANCAR_DADOS"
+mostrar_menu_compra = False
+mostrar_menu_proposta = False
+mostrar_menu_construcao = False
+tempo_bloqueio_botoes = 0  # Timer to block buttons for 1 second (60 frames at 60fps)
+botoes_bloqueados = False
+turno_bot_em_execucao = False  # Flag to disable HUD during bot turns
+
+mostrar_menu_negociacao = False
+jogador_negociacao_selecionado = None # Player to negotiate with
+proposta_negociacao_ativa = None # Not implemented yet
+
+mostrar_painel_propriedades = False
+jogador_selecionado_para_info = None
+mostrar_popup_carta = False
+mensagem_carta_atual = ""
+tempo_mensagem_carta = 0
+mensagens_log = []
+mensagens_feedback = []
+MAX_MENSAGENS_LOG = 100
+MAX_MENSAGENS_FEEDBACK = 30
+scroll_feedback = 0
+dado1_valor = None
+dado2_valor = None
+dados_lancados = False
+# botoes_desabilitados = False # Removed based on updates
+# tempo_desabilitacao = 0     # Removed based on updates
+
+clock = pygame.time.Clock()
+
+menu_inicial = MenuInicial(screen)
+tela_fim_jogo = None
+
+def atualizar_bloqueio_botoes():
+    """
+    Atualiza o estado de bloqueio dos botões.
+    Desabilita por 1 segundo após o jogador clicar em LANÇAR DADOS.
+    """
+    global tempo_bloqueio_botoes, botoes_bloqueados
+    
+    if tempo_bloqueio_botoes > 0:
+        tempo_bloqueio_botoes -= 1
+        botoes_bloqueados = True
+    else:
+        botoes_bloqueados = False
 
 # --- MAIN GAME LOOP ---
 while running:
+    # Removed botoes_desabilitados check from event handling
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -780,14 +1071,27 @@ while running:
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             print(f"Clique do mouse em: {event.pos}")
             
+            if estado_jogo == "INICIO_TURNO" and not mostrar_menu_compra and not mostrar_menu_proposta and not mostrar_menu_construcao and not mostrar_menu_negociacao:
+                for i, (pos_x, pos_y) in enumerate(POSICOES_TEXTO_JOGADOR):
+                    if i < len(jogo_backend.jogadores):
+                        rect_jogador = pygame.Rect(pos_x, pos_y, 220, 100)
+                        if rect_jogador.collidepoint(event.pos):
+                            jogador_selecionado_para_info = jogo_backend.jogadores[i]
+                            mostrar_painel_propriedades = True
+                            break
+            
+            if mostrar_painel_propriedades and hasattr(desenhar_painel_propriedades_jogador, 'fechar_rect'):
+                if desenhar_painel_propriedades_jogador.fechar_rect.collidepoint(event.pos):
+                    mostrar_painel_propriedades = False
+                    jogador_selecionado_para_info = None
+            
             if MOSTRAR_HUD_MENU and estado_jogo == "INICIO_TURNO":
                 if hasattr(desenhar_menu_turno, 'botao_lancar_rect') and \
                    desenhar_menu_turno.botao_lancar_rect.collidepoint(event.pos):
-                    if estado_turno == "ANTES_LANCAR_DADOS":
-                        if jogo_backend.jogo_finalizado:
-                            tela_fim_jogo = TelaFimDeJogo(screen, jogo_backend)
-                            estado_jogo = "FIM_JOGO"
-                            continue
+                    
+                    if estado_turno == "ANTES_LANCAR_DADOS" and not turno_bot_em_execucao:
+                        tempo_bloqueio_botoes = 60
+                        estado_turno = "LANCANDO_DADOS"
                         
                         jogador_antes = jogo_backend.jogadores[jogo_backend.indice_turno_atual].nome
                         
@@ -834,7 +1138,7 @@ while running:
                                 adicionar_mensagem_log(f"Pagando aluguel...")
                                 adicionar_mensagem_feedback(f"Pagando aluguel...")
                             
-                            resultado = jogo_backend.executar_acao_automatica(casa_onde_parei)
+                            resultado = jogo_backend.executar_acao_automatica(casa_atual)
                             if resultado and "mensagem" in resultado:
                                 tempo_mensagem_carta = 200
                                 mensagem_carta_atual = resultado["mensagem"]
@@ -863,30 +1167,47 @@ while running:
                 
                 elif hasattr(desenhar_menu_turno, 'botao_comprar_rect') and \
                      desenhar_menu_turno.botao_comprar_rect.collidepoint(event.pos):
-                    if estado_turno == "APOS_LANCAR_DADOS":
+                    if estado_turno == "APOS_LANCAR_DADOS" and not turno_bot_em_execucao:
+                        # Direct purchase logic without disabling buttons
                         jogador_atual = jogo_backend.jogadores[jogo_backend.indice_turno_atual]
                         casa_atual = jogo_backend.tabuleiro.casas[jogador_atual.posicao]
                         
                         if isinstance(casa_atual, Propriedade) and not casa_atual.proprietario:
-                            mostrar_menu_compra = True
-                            adicionar_mensagem_log("Abrindo menu de compra")
-                            adicionar_mensagem_feedback("Abrindo menu de compra")
-                        else:
-                            adicionar_mensagem_log("Esta propriedade não pode ser comprada")
-                            adicionar_mensagem_feedback("Esta propriedade não pode ser comprada")
-                    continue
+                            sucesso = jogo_backend.executar_compra()
+                            if sucesso:
+                                adicionar_mensagem_log(f"{jogador_atual.nome} comprou {casa_atual.nome}")
+                                adicionar_mensagem_feedback(f"{jogador_atual.nome} comprou {casa_atual.nome}")
+                                mostrar_menu_compra = False # Close the purchase menu
+                                # Auto-pass turn after buying
+                                jogo_backend.finalizar_turno()
+                                if jogo_backend.jogo_finalizado:
+                                    tela_fim_jogo = TelaFimDeJogo(screen, jogo_backend)
+                                    estado_jogo = "FIM_JOGO"
+                                else:
+                                    estado_turno = "ANTES_LANCAR_DADOS"
+                                    dados_lancados = False
+                            else:
+                                adicionar_mensagem_log("Não foi possível comprar a propriedade")
+                                adicionar_mensagem_feedback("Não foi possível comprar a propriedade")
+                        continue
                 
                 elif hasattr(desenhar_menu_turno, 'botao_propriedades_rect') and \
                      desenhar_menu_turno.botao_propriedades_rect.collidepoint(event.pos):
-                    if estado_turno == "APOS_LANCAR_DADOS":
+                    if estado_turno == "APOS_LANCAR_DADOS" and not turno_bot_em_execucao:
                         mostrar_menu_proposta = True
                         adicionar_mensagem_log("Abrindo gerenciador de propriedades")
                         adicionar_mensagem_feedback("Abrindo gerenciador de propriedades")
                     continue
                 
+                elif hasattr(desenhar_menu_turno, 'botao_negociar_rect') and \
+                     desenhar_menu_turno.botao_negociar_rect.collidepoint(event.pos):
+                    if estado_turno == "APOS_LANCAR_DADOS" and not turno_bot_em_execucao:
+                        mostrar_menu_negociacao = True
+                    continue
+                
                 elif hasattr(desenhar_menu_turno, 'botao_passar_rect') and \
                      desenhar_menu_turno.botao_passar_rect.collidepoint(event.pos):
-                    if estado_turno == "APOS_LANCAR_DADOS":
+                    if estado_turno == "APOS_LANCAR_DADOS" and not turno_bot_em_execucao:
                         jogo_backend.finalizar_turno()
                         if jogo_backend.jogo_finalizado:
                             tela_fim_jogo = TelaFimDeJogo(screen, jogo_backend)
@@ -915,6 +1236,7 @@ while running:
                                 casas_txt = "Hotel" if propriedade.casas == 5 else f"{propriedade.casas} casas"
                                 adicionar_mensagem_log(f"Construiu em {propriedade.nome}: {casas_txt}")
                                 adicionar_mensagem_feedback(f"Construiu em {propriedade.nome}: {casas_txt}")
+                                # No change in state here, construction menu stays open until closed
                             break
                 continue
             
@@ -951,11 +1273,11 @@ while running:
                     casa_atual = jogo_backend.tabuleiro.casas[jogador_atual.posicao]
                     
                     if isinstance(casa_atual, Propriedade) and not casa_atual.proprietario:
-                        sucesso = jogo_backend.comprar_propriedade(jogador_atual, casa_atual)
+                        sucesso = jogo_backend.executar_compra()
                         if sucesso:
                             adicionar_mensagem_log(f"{jogador_atual.nome} comprou {casa_atual.nome}")
                             adicionar_mensagem_feedback(f"{jogador_atual.nome} comprou {casa_atual.nome}")
-                            mostrar_menu_compra = False
+                            mostrar_menu_compra = False # Close the purchase menu
                             # Auto-pass turn after buying
                             jogo_backend.finalizar_turno()
                             if jogo_backend.jogo_finalizado:
@@ -963,11 +1285,66 @@ while running:
                                 estado_jogo = "FIM_JOGO"
                             else:
                                 estado_turno = "ANTES_LANCAR_DADOS"
+                                dados_lancados = False
                         else:
                             adicionar_mensagem_log("Não foi possível comprar a propriedade")
                             adicionar_mensagem_feedback("Não foi possível comprar a propriedade")
                 continue
-            
+
+            if mostrar_menu_negociacao and hasattr(desenhar_menu_negociacao, 'fechar_rect'):
+                if desenhar_menu_negociacao.fechar_rect.collidepoint(event.pos):
+                    mostrar_menu_negociacao = False
+                    desenhar_menu_negociacao.jogador_selecionado_para_negociacao = None # Reset selected player
+                    continue
+                
+                # Player selection
+                if hasattr(desenhar_menu_negociacao, 'player_buttons'):
+                    for player_button, jogador in desenhar_menu_negociacao.player_buttons:
+                        if player_button.collidepoint(event.pos):
+                            desenhar_menu_negociacao.jogador_selecionado_para_negociacao = jogador # Store selected player
+                            # Clear previous selections
+                            if hasattr(desenhar_menu_negociacao, 'sua_prop_selecionada'):
+                                del desenhar_menu_negociacao.sua_prop_selecionada
+                            continue
+                
+                # Your properties selection
+                if hasattr(desenhar_menu_negociacao, 'sua_propriedades_buttons') and hasattr(desenhar_menu_negociacao, 'jogador_selecionado_para_negociacao'):
+                    for prop_button, prop_sua in desenhar_menu_negociacao.sua_propriedades_buttons:
+                        if prop_button.collidepoint(event.pos):
+                            desenhar_menu_negociacao.sua_prop_selecionada = prop_sua
+                            adicionar_mensagem_feedback(f"Selecionou {prop_sua.nome} para oferecer")
+                            continue
+                
+                # Other player's properties selection and trade proposal
+                if hasattr(desenhar_menu_negociacao, 'outra_propriedades_buttons') and hasattr(desenhar_menu_negociacao, 'sua_prop_selecionada') and desenhar_menu_negociacao.sua_prop_selecionada:
+                    for prop_button, prop_deles in desenhar_menu_negociacao.outra_propriedades_buttons:
+                        if prop_button.collidepoint(event.pos):
+                            # Execute trade proposal
+                            jogador_atual = jogo_backend.jogadores[jogo_backend.indice_turno_atual]
+                            jogador_a_trocar = desenhar_menu_negociacao.jogador_selecionado_para_negociacao
+                            
+                            # Note: The trade proposal function currently acts as an immediate trade for simplicity.
+                            # A full implementation would involve waiting for the other player's response.
+                            sucesso = jogo_backend.negociador_propriedades.propor_troca_propriedades(
+                                jogador_atual,
+                                jogador_a_trocar,
+                                desenhar_menu_negociacao.sua_prop_selecionada,
+                                prop_deles,
+                                0 # Money component not implemented
+                            )
+                            
+                            if sucesso:
+                                # Currently, accepting the trade immediately
+                                jogo_backend.negociador_propriedades.aceitar_troca(sucesso)
+                                adicionar_mensagem_log(f"Troca realizada: {desenhar_menu_negociacao.sua_prop_selecionada.nome} por {prop_deles.nome}")
+                                adicionar_mensagem_feedback(f"Troca realizada com {jogador_a_trocar.nome}")
+                                mostrar_menu_negociacao = False
+                                desenhar_menu_negociacao.jogador_selecionado_para_negociacao = None
+                                del desenhar_menu_negociacao.sua_prop_selecionada
+                            else:
+                                adicionar_mensagem_log("Falha na negociação.")
+                                adicionar_mensagem_feedback("Falha na negociação.")
+                            continue
             
     # --- ATUALIZAÇÃO DAS ANIMAÇÕES ---
     if estado_jogo == "MENU":
@@ -1025,40 +1402,16 @@ while running:
             screen.blit(texto_nome, (pos_texto_x, pos_texto_y))
             screen.blit(texto_saldo, (pos_texto_x, pos_texto_y + 20))
             
-            # Mostrar propriedades abaixo do nome e saldo
-            if jogador.propriedades:
-                y_offset = pos_texto_y + 40
-                max_chars_por_linha = 25
-                linhas_props = []
-                linha_atual = ""
-                
-                for nome_prop in [prop.nome for prop in jogador.propriedades]:
-                    if len(linha_atual) + len(nome_prop) + 2 > max_chars_por_linha:
-                        if linha_atual:
-                            linhas_props.append(linha_atual)
-                        linha_atual = nome_prop
-                    else:
-                        if linha_atual:
-                            linha_atual += ", " + nome_prop
-                        else:
-                            linha_atual = nome_prop
-                
-                if linha_atual:
-                    linhas_props.append(linha_atual)
-                
-                # Renderizar cada linha das propriedades com altura máxima
-                max_linhas_visíveis = 4  # Limit to 4 lines of properties
-                for idx, linha in enumerate(linhas_props[:max_linhas_visíveis]):
-                    props_text = FONTE_PEQUENA.render(linha, True, (200, 200, 255))
-                    screen.blit(props_text, (pos_texto_x, y_offset + (idx * 12)))
-                
-                # If more properties than space, show ellipsis
-                if len(linhas_props) > max_linhas_visíveis:
-                    ellipsis = FONTE_PEQUENA.render("...", True, (200, 200, 255))
-                    screen.blit(ellipsis, (pos_texto_x, y_offset + (max_linhas_visíveis * 12)))
-            # </CHANGE>
+            num_props = len(jogador.propriedades)
+            if num_props > 0:
+                texto_props_info = FONTE_PEQUENA.render(f"Propriedades: {num_props} [clique]", True, (200, 200, 100))
+                screen.blit(texto_props_info, (pos_texto_x, pos_texto_y + 35))
         
-        if dados_lancados and dado1_valor > 0 and dado2_valor > 0:
+        if mostrar_painel_propriedades and jogador_selecionado_para_info:
+            desenhar_painel_propriedades_jogador(jogador_selecionado_para_info)
+        
+        # Draw dados if they were rolled
+        if dados_lancados and dado1_valor and dado2_valor:
             # Draw white background for dice
             pygame.draw.rect(screen, (255, 255, 255), (20, 530, 140, 60))
             pygame.draw.rect(screen, (0, 0, 0), (20, 530, 140, 60), 2)
@@ -1073,88 +1426,6 @@ while running:
             texto_dados = FONTE_PEQUENA.render(f"Dados: {dado1_valor} + {dado2_valor}", True, (255, 255, 255))
             screen.blit(texto_dados, (25, 595))
 
-        if estado_jogo == "INICIO_TURNO":
-            hud_width = HUD_MENU_WIDTH
-            hud_height = HUD_MENU_HEIGHT
-            
-            if jogo_backend and not jogo_backend.jogo_finalizado:
-                jogador_atual = jogo_backend.jogadores[jogo_backend.indice_turno_atual]
-                hud_x = BOARD_CENTER_X - hud_width // 2 + AJUSTE_HUD_X
-                hud_y = HUD_MENU_Y + AJUSTE_HUD_Y
-                
-                player_index = jogo_backend.indice_turno_atual
-                cor_fundo_menu = CORES_JOGADORES_MENU.get(jogador_atual.nome, (110, 70, 70))
-                cor_borda_menu = tuple(min(255, c + 50) for c in cor_fundo_menu)
-                
-                pygame.draw.rect(screen, cor_fundo_menu, (hud_x, hud_y, hud_width, hud_height))
-                pygame.draw.rect(screen, cor_borda_menu, (hud_x, hud_y, hud_width, hud_height), 3)
-            
-            turno_texto = FONTE_MEDIA.render(f"Turno: {jogo_backend.jogadores[jogo_backend.indice_turno_atual].nome}", 
-                                            True, (255, 255, 255))
-            text_rect = turno_texto.get_rect()
-            text_rect.center = (BOARD_CENTER_X, HUD_MENU_Y + AJUSTE_HUD_Y - 20)
-            screen.blit(turno_texto, text_rect)
-            
-            if estado_turno == "ANTES_LANCAR_DADOS":
-                botao_y = HUD_MENU_Y + AJUSTE_HUD_Y + 70
-                botao_x = BOARD_CENTER_X - 160 // 2 + AJUSTE_HUD_X
-                altura_botao = 35
-                largura_botao = 160
-                
-                cor_fundo = (50, 150, 50) if mouse_sobre_botao(botao_x, botao_y, largura_botao, altura_botao) else (30, 100, 30)
-                pygame.draw.rect(screen, cor_fundo, (botao_x, botao_y, largura_botao, altura_botao))
-                pygame.draw.rect(screen, (100, 255, 100), (botao_x, botao_y, largura_botao, altura_botao), 2)
-                texto_lancar = FONTE_PEQUENA.render("LANÇAR DADOS", True, (255, 255, 255))
-                texto_rect = texto_lancar.get_rect()
-                texto_rect.center = (botao_x + largura_botao // 2, botao_y + altura_botao // 2)
-                screen.blit(texto_lancar, texto_rect)
-            
-            elif estado_turno == "APOS_LANCAR_DADOS":
-                botao_x = BOARD_CENTER_X - 160 // 2 + AJUSTE_HUD_X
-                botao_y = HUD_MENU_Y + AJUSTE_HUD_Y + 60
-                altura_botao = 35
-                largura_botao = 160
-                
-                cor_fundo = (100, 150, 200) if mouse_sobre_botao(botao_x, botao_y, largura_botao, altura_botao) else (70, 100, 150)
-                pygame.draw.rect(screen, cor_fundo, (botao_x, botao_y, largura_botao, altura_botao))
-                pygame.draw.rect(screen, (150, 200, 255), (botao_x, botao_y, largura_botao, altura_botao), 2)
-                texto_comprar = FONTE_PEQUENA.render("COMPRAR", True, (255, 255, 255))
-                texto_rect = texto_comprar.get_rect()
-                texto_rect.center = (botao_x + largura_botao // 2, botao_y + altura_botao // 2)
-                screen.blit(texto_comprar, texto_rect)
-                
-                botao_y += 45
-                
-                cor_fundo = (150, 100, 200) if mouse_sobre_botao(botao_x, botao_y, largura_botao, altura_botao) else (100, 70, 150)
-                pygame.draw.rect(screen, cor_fundo, (botao_x, botao_y, largura_botao, altura_botao))
-                pygame.draw.rect(screen, (200, 150, 255), (botao_x, botao_y, largura_botao, altura_botao), 2)
-                texto_construir = FONTE_PEQUENA.render("CONSTRUIR", True, (255, 255, 255))
-                texto_rect = texto_construir.get_rect()
-                texto_rect.center = (botao_x + largura_botao // 2, botao_y + altura_botao // 2)
-                screen.blit(texto_construir, texto_rect)
-                
-                botao_y += 45
-                
-                # Botão Gerenciador de Propriedades
-                cor_fundo = (100, 150, 200) if mouse_sobre_botao(botao_x, botao_y, largura_botao, altura_botao) else (70, 100, 150)
-                pygame.draw.rect(screen, cor_fundo, (botao_x, botao_y, largura_botao, altura_botao))
-                pygame.draw.rect(screen, (150, 200, 255), (botao_x, botao_y, largura_botao, altura_botao), 2)
-                texto_propriedades = FONTE_PEQUENA.render("PROPRIEDADES", True, (255, 255, 255))
-                texto_rect = texto_propriedades.get_rect()
-                texto_rect.center = (botao_x + largura_botao // 2, botao_y + altura_botao // 2)
-                screen.blit(texto_propriedades, texto_rect)
-                
-                botao_y += 45
-                
-                # Botão Passar a Vez
-                cor_fundo = (200, 100, 100) if mouse_sobre_botao(botao_x, botao_y, largura_botao, altura_botao) else (150, 70, 70)
-                pygame.draw.rect(screen, cor_fundo, (botao_x, botao_y, largura_botao, altura_botao))
-                pygame.draw.rect(screen, (255, 150, 150), (botao_x, botao_y, largura_botao, altura_botao), 2)
-                texto_passar = FONTE_PEQUENA.render("PASSAR A VEZ", True, (255, 255, 255))
-                texto_rect = texto_passar.get_rect()
-                texto_rect.center = (botao_x + largura_botao // 2, botao_y + altura_botao // 2)
-                screen.blit(texto_passar, texto_rect)
-        
         if mostrar_menu_compra:
             desenhar_menu_compra()
         
@@ -1164,12 +1435,17 @@ while running:
         if mostrar_menu_construcao:
             desenhar_menu_construcao()
         
+        if mostrar_menu_negociacao:
+            desenhar_menu_negociacao()
+        
         desenhar_painel_feedback()
-        desenhar_menu_turno() # Draw the turn menu on the left
+        desenhar_menu_turno() # Draw the turn menu on the left - ONLY HUD
         
         if mostrar_popup_carta:
             desenhar_popup_carta()
     
+    atualizar_bloqueio_botoes()
+
     pygame.display.flip()
     clock.tick(60)
 
